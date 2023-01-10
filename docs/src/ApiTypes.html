@@ -1,0 +1,623 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span id="%24maxtag_16xzbxnlv4n9iU1QSyvazT"><span id="%24tag2con_16xzbxnlv4n9iU1QSyvazT"><span id="%24con2tag_16xzbxnlv4n9iU1QSyvazT"><span id="%24maxtag_Fdo6y90roqdJ7lc7pOsgxu"><span id="%24tag2con_Fdo6y90roqdJ7lc7pOsgxu"><span id="%24con2tag_Fdo6y90roqdJ7lc7pOsgxu"><span id="%24maxtag_2oHAmBOzx7WIKzzqTR12lz"><span id="%24tag2con_2oHAmBOzx7WIKzzqTR12lz"><span id="%24con2tag_2oHAmBOzx7WIKzzqTR12lz"><span id="%24maxtag_4rutuPaGb5ZL2JGymIuIJb"><span id="%24tag2con_4rutuPaGb5ZL2JGymIuIJb"><span id="%24con2tag_4rutuPaGb5ZL2JGymIuIJb"></span></span></span></span></span></span></span></span></span></span></span></span><span class="hs-pragma">{-# LANGUAGE DataKinds       #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE TypeOperators   #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- | Types used in the BugWalker API</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">ApiTypes</span><span>
+</span><span id="line-7"></span><span>    </span><span class="hs-special">(</span><span> </span><span>
+</span><span id="line-8"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BuildT"><span class="hs-identifier">BuildT</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>      </span><span class="annot"><a href="ApiTypes.html#SpellT"><span class="hs-identifier">SpellT</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>      </span><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier">Bug</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BugDetail"><span class="hs-identifier">BugDetail</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BugSeverity"><span class="hs-identifier">BugSeverity</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BugType"><span class="hs-identifier">BugType</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>      </span><span class="annot"><a href="ApiTypes.html#Specialisation"><span class="hs-identifier">Specialisation</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BugStatus"><span class="hs-identifier">BugStatus</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>      </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>      </span><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier">LoginResponseMessage</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BugChangedResponseMessage"><span class="hs-identifier">BugChangedResponseMessage</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>      </span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier">UserChangedResponseMessage</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>      </span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier">Comment</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-22"></span><span class="hs-comment">--</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">defaultOptions</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson.TH</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">defaultOptions</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">deriveJSON</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Int</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Int64</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-comment">--</span><span>
+</span><span id="line-27"></span><span>
+</span><span id="line-28"></span><span class="hs-comment">{- Data Types -}</span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- | Represents the possible Specilisations that a monk can have</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">data</span><span> </span><span id="Specialisation"><span class="annot"><a href="ApiTypes.html#Specialisation"><span class="hs-identifier hs-var">Specialisation</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="All"><span class="annot"><a href="ApiTypes.html#All"><span class="hs-identifier hs-var">All</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Windwalker"><span class="annot"><a href="ApiTypes.html#Windwalker"><span class="hs-identifier hs-var">Windwalker</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Brewmaster"><span class="annot"><a href="ApiTypes.html#Brewmaster"><span class="hs-identifier hs-var">Brewmaster</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Mistweaver"><span class="annot"><a href="ApiTypes.html#Mistweaver"><span class="hs-identifier hs-var">Mistweaver</span></a></span></span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352096"><span id="local-6989586621679352098"><span id="local-6989586621679352100"><span id="local-6989586621679352102"><span id="local-6989586621679352104"><span id="local-6989586621679352106"><span id="local-6989586621679352108"><span id="local-6989586621679352110"><span class="annot"><span class="annottext">Int -&gt; Specialisation
+Specialisation -&gt; Int
+Specialisation -&gt; [Specialisation]
+Specialisation -&gt; Specialisation
+Specialisation -&gt; Specialisation -&gt; [Specialisation]
+Specialisation
+-&gt; Specialisation -&gt; Specialisation -&gt; [Specialisation]
+(Specialisation -&gt; Specialisation)
+-&gt; (Specialisation -&gt; Specialisation)
+-&gt; (Int -&gt; Specialisation)
+-&gt; (Specialisation -&gt; Int)
+-&gt; (Specialisation -&gt; [Specialisation])
+-&gt; (Specialisation -&gt; Specialisation -&gt; [Specialisation])
+-&gt; (Specialisation -&gt; Specialisation -&gt; [Specialisation])
+-&gt; (Specialisation
+    -&gt; Specialisation -&gt; Specialisation -&gt; [Specialisation])
+-&gt; Enum Specialisation
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+enumFromThenTo :: Specialisation
+-&gt; Specialisation -&gt; Specialisation -&gt; [Specialisation]
+$cenumFromThenTo :: Specialisation
+-&gt; Specialisation -&gt; Specialisation -&gt; [Specialisation]
+enumFromTo :: Specialisation -&gt; Specialisation -&gt; [Specialisation]
+$cenumFromTo :: Specialisation -&gt; Specialisation -&gt; [Specialisation]
+enumFromThen :: Specialisation -&gt; Specialisation -&gt; [Specialisation]
+$cenumFromThen :: Specialisation -&gt; Specialisation -&gt; [Specialisation]
+enumFrom :: Specialisation -&gt; [Specialisation]
+$cenumFrom :: Specialisation -&gt; [Specialisation]
+fromEnum :: Specialisation -&gt; Int
+$cfromEnum :: Specialisation -&gt; Int
+toEnum :: Int -&gt; Specialisation
+$ctoEnum :: Int -&gt; Specialisation
+pred :: Specialisation -&gt; Specialisation
+$cpred :: Specialisation -&gt; Specialisation
+succ :: Specialisation -&gt; Specialisation
+$csucc :: Specialisation -&gt; Specialisation
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352089"><span id="local-6989586621679352091"><span id="local-6989586621679352093"><span class="annot"><span class="annottext">Int -&gt; Specialisation -&gt; ShowS
+[Specialisation] -&gt; ShowS
+Specialisation -&gt; String
+(Int -&gt; Specialisation -&gt; ShowS)
+-&gt; (Specialisation -&gt; String)
+-&gt; ([Specialisation] -&gt; ShowS)
+-&gt; Show Specialisation
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Specialisation] -&gt; ShowS
+$cshowList :: [Specialisation] -&gt; ShowS
+show :: Specialisation -&gt; String
+$cshow :: Specialisation -&gt; String
+showsPrec :: Int -&gt; Specialisation -&gt; ShowS
+$cshowsPrec :: Int -&gt; Specialisation -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-special">$(</span><span id="local-6989586621679352076"><span id="local-6989586621679352078"><span id="local-6989586621679352080"><span id="local-6989586621679352082"><span id="local-6989586621679352084"><span id="local-6989586621679352086"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">Specialisation</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- | Represents the statuses that a Bug can have</span><span>
+</span><span id="line-35"></span><span class="hs-keyword">data</span><span> </span><span id="BugStatus"><span class="annot"><a href="ApiTypes.html#BugStatus"><span class="hs-identifier hs-var">BugStatus</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Closed"><span class="annot"><a href="ApiTypes.html#Closed"><span class="hs-identifier hs-var">Closed</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Open"><span class="annot"><a href="ApiTypes.html#Open"><span class="hs-identifier hs-var">Open</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Verified"><span class="annot"><a href="ApiTypes.html#Verified"><span class="hs-identifier hs-var">Verified</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Archived"><span class="annot"><a href="ApiTypes.html#Archived"><span class="hs-identifier hs-var">Archived</span></a></span></span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352051"><span id="local-6989586621679352053"><span id="local-6989586621679352055"><span id="local-6989586621679352057"><span id="local-6989586621679352059"><span id="local-6989586621679352061"><span id="local-6989586621679352063"><span id="local-6989586621679352065"><span class="annot"><span class="annottext">Int -&gt; BugStatus
+BugStatus -&gt; Int
+BugStatus -&gt; [BugStatus]
+BugStatus -&gt; BugStatus
+BugStatus -&gt; BugStatus -&gt; [BugStatus]
+BugStatus -&gt; BugStatus -&gt; BugStatus -&gt; [BugStatus]
+(BugStatus -&gt; BugStatus)
+-&gt; (BugStatus -&gt; BugStatus)
+-&gt; (Int -&gt; BugStatus)
+-&gt; (BugStatus -&gt; Int)
+-&gt; (BugStatus -&gt; [BugStatus])
+-&gt; (BugStatus -&gt; BugStatus -&gt; [BugStatus])
+-&gt; (BugStatus -&gt; BugStatus -&gt; [BugStatus])
+-&gt; (BugStatus -&gt; BugStatus -&gt; BugStatus -&gt; [BugStatus])
+-&gt; Enum BugStatus
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+enumFromThenTo :: BugStatus -&gt; BugStatus -&gt; BugStatus -&gt; [BugStatus]
+$cenumFromThenTo :: BugStatus -&gt; BugStatus -&gt; BugStatus -&gt; [BugStatus]
+enumFromTo :: BugStatus -&gt; BugStatus -&gt; [BugStatus]
+$cenumFromTo :: BugStatus -&gt; BugStatus -&gt; [BugStatus]
+enumFromThen :: BugStatus -&gt; BugStatus -&gt; [BugStatus]
+$cenumFromThen :: BugStatus -&gt; BugStatus -&gt; [BugStatus]
+enumFrom :: BugStatus -&gt; [BugStatus]
+$cenumFrom :: BugStatus -&gt; [BugStatus]
+fromEnum :: BugStatus -&gt; Int
+$cfromEnum :: BugStatus -&gt; Int
+toEnum :: Int -&gt; BugStatus
+$ctoEnum :: Int -&gt; BugStatus
+pred :: BugStatus -&gt; BugStatus
+$cpred :: BugStatus -&gt; BugStatus
+succ :: BugStatus -&gt; BugStatus
+$csucc :: BugStatus -&gt; BugStatus
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352045"><span id="local-6989586621679352047"><span id="local-6989586621679352049"><span class="annot"><span class="annottext">Int -&gt; BugStatus -&gt; ShowS
+[BugStatus] -&gt; ShowS
+BugStatus -&gt; String
+(Int -&gt; BugStatus -&gt; ShowS)
+-&gt; (BugStatus -&gt; String)
+-&gt; ([BugStatus] -&gt; ShowS)
+-&gt; Show BugStatus
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BugStatus] -&gt; ShowS
+$cshowList :: [BugStatus] -&gt; ShowS
+show :: BugStatus -&gt; String
+$cshow :: BugStatus -&gt; String
+showsPrec :: Int -&gt; BugStatus -&gt; ShowS
+$cshowsPrec :: Int -&gt; BugStatus -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-special">$(</span><span id="local-6989586621679352033"><span id="local-6989586621679352035"><span id="local-6989586621679352037"><span id="local-6989586621679352039"><span id="local-6989586621679352041"><span id="local-6989586621679352043"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BugStatus</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span>
+</span><span id="line-38"></span><span class="hs-comment">-- | Represents the severity levels that a Bug can have</span><span>
+</span><span id="line-39"></span><span class="hs-keyword">data</span><span> </span><span id="BugSeverity"><span class="annot"><a href="ApiTypes.html#BugSeverity"><span class="hs-identifier hs-var">BugSeverity</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Low"><span class="annot"><a href="ApiTypes.html#Low"><span class="hs-identifier hs-var">Low</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Medium"><span class="annot"><a href="ApiTypes.html#Medium"><span class="hs-identifier hs-var">Medium</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Critical"><span class="annot"><a href="ApiTypes.html#Critical"><span class="hs-identifier hs-var">Critical</span></a></span></span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352014"><span id="local-6989586621679352016"><span id="local-6989586621679352018"><span id="local-6989586621679352020"><span id="local-6989586621679352022"><span id="local-6989586621679352024"><span id="local-6989586621679352026"><span id="local-6989586621679352028"><span class="annot"><span class="annottext">Int -&gt; BugSeverity
+BugSeverity -&gt; Int
+BugSeverity -&gt; [BugSeverity]
+BugSeverity -&gt; BugSeverity
+BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+BugSeverity -&gt; BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+(BugSeverity -&gt; BugSeverity)
+-&gt; (BugSeverity -&gt; BugSeverity)
+-&gt; (Int -&gt; BugSeverity)
+-&gt; (BugSeverity -&gt; Int)
+-&gt; (BugSeverity -&gt; [BugSeverity])
+-&gt; (BugSeverity -&gt; BugSeverity -&gt; [BugSeverity])
+-&gt; (BugSeverity -&gt; BugSeverity -&gt; [BugSeverity])
+-&gt; (BugSeverity -&gt; BugSeverity -&gt; BugSeverity -&gt; [BugSeverity])
+-&gt; Enum BugSeverity
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+enumFromThenTo :: BugSeverity -&gt; BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+$cenumFromThenTo :: BugSeverity -&gt; BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+enumFromTo :: BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+$cenumFromTo :: BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+enumFromThen :: BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+$cenumFromThen :: BugSeverity -&gt; BugSeverity -&gt; [BugSeverity]
+enumFrom :: BugSeverity -&gt; [BugSeverity]
+$cenumFrom :: BugSeverity -&gt; [BugSeverity]
+fromEnum :: BugSeverity -&gt; Int
+$cfromEnum :: BugSeverity -&gt; Int
+toEnum :: Int -&gt; BugSeverity
+$ctoEnum :: Int -&gt; BugSeverity
+pred :: BugSeverity -&gt; BugSeverity
+$cpred :: BugSeverity -&gt; BugSeverity
+succ :: BugSeverity -&gt; BugSeverity
+$csucc :: BugSeverity -&gt; BugSeverity
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352008"><span id="local-6989586621679352010"><span id="local-6989586621679352012"><span class="annot"><span class="annottext">Int -&gt; BugSeverity -&gt; ShowS
+[BugSeverity] -&gt; ShowS
+BugSeverity -&gt; String
+(Int -&gt; BugSeverity -&gt; ShowS)
+-&gt; (BugSeverity -&gt; String)
+-&gt; ([BugSeverity] -&gt; ShowS)
+-&gt; Show BugSeverity
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BugSeverity] -&gt; ShowS
+$cshowList :: [BugSeverity] -&gt; ShowS
+show :: BugSeverity -&gt; String
+$cshow :: BugSeverity -&gt; String
+showsPrec :: Int -&gt; BugSeverity -&gt; ShowS
+$cshowsPrec :: Int -&gt; BugSeverity -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-40"></span><span class="hs-special">$(</span><span id="local-6989586621679351996"><span id="local-6989586621679351998"><span id="local-6989586621679352000"><span id="local-6989586621679352002"><span id="local-6989586621679352004"><span id="local-6989586621679352006"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BugSeverity</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-41"></span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- | Represents the different types that a Bug can have</span><span>
+</span><span id="line-43"></span><span class="hs-keyword">data</span><span> </span><span id="BugType"><span class="annot"><a href="ApiTypes.html#BugType"><span class="hs-identifier hs-var">BugType</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Visual"><span class="annot"><a href="ApiTypes.html#Visual"><span class="hs-identifier hs-var">Visual</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Mechanical"><span class="annot"><a href="ApiTypes.html#Mechanical"><span class="hs-identifier hs-var">Mechanical</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="Gameplay"><span class="annot"><a href="ApiTypes.html#Gameplay"><span class="hs-identifier hs-var">Gameplay</span></a></span></span><span> </span><span class="hs-glyph">|</span><span> </span><span id="System"><span class="annot"><a href="ApiTypes.html#System"><span class="hs-identifier hs-var">System</span></a></span></span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351976"><span id="local-6989586621679351978"><span id="local-6989586621679351980"><span id="local-6989586621679351982"><span id="local-6989586621679351984"><span id="local-6989586621679351986"><span id="local-6989586621679351988"><span id="local-6989586621679351990"><span class="annot"><span class="annottext">Int -&gt; BugType
+BugType -&gt; Int
+BugType -&gt; [BugType]
+BugType -&gt; BugType
+BugType -&gt; BugType -&gt; [BugType]
+BugType -&gt; BugType -&gt; BugType -&gt; [BugType]
+(BugType -&gt; BugType)
+-&gt; (BugType -&gt; BugType)
+-&gt; (Int -&gt; BugType)
+-&gt; (BugType -&gt; Int)
+-&gt; (BugType -&gt; [BugType])
+-&gt; (BugType -&gt; BugType -&gt; [BugType])
+-&gt; (BugType -&gt; BugType -&gt; [BugType])
+-&gt; (BugType -&gt; BugType -&gt; BugType -&gt; [BugType])
+-&gt; Enum BugType
+forall a.
+(a -&gt; a)
+-&gt; (a -&gt; a)
+-&gt; (Int -&gt; a)
+-&gt; (a -&gt; Int)
+-&gt; (a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; [a])
+-&gt; (a -&gt; a -&gt; a -&gt; [a])
+-&gt; Enum a
+enumFromThenTo :: BugType -&gt; BugType -&gt; BugType -&gt; [BugType]
+$cenumFromThenTo :: BugType -&gt; BugType -&gt; BugType -&gt; [BugType]
+enumFromTo :: BugType -&gt; BugType -&gt; [BugType]
+$cenumFromTo :: BugType -&gt; BugType -&gt; [BugType]
+enumFromThen :: BugType -&gt; BugType -&gt; [BugType]
+$cenumFromThen :: BugType -&gt; BugType -&gt; [BugType]
+enumFrom :: BugType -&gt; [BugType]
+$cenumFrom :: BugType -&gt; [BugType]
+fromEnum :: BugType -&gt; Int
+$cfromEnum :: BugType -&gt; Int
+toEnum :: Int -&gt; BugType
+$ctoEnum :: Int -&gt; BugType
+pred :: BugType -&gt; BugType
+$cpred :: BugType -&gt; BugType
+succ :: BugType -&gt; BugType
+$csucc :: BugType -&gt; BugType
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Enum</span></span></span></span></span></span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679351970"><span id="local-6989586621679351972"><span id="local-6989586621679351974"><span class="annot"><span class="annottext">Int -&gt; BugType -&gt; ShowS
+[BugType] -&gt; ShowS
+BugType -&gt; String
+(Int -&gt; BugType -&gt; ShowS)
+-&gt; (BugType -&gt; String) -&gt; ([BugType] -&gt; ShowS) -&gt; Show BugType
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BugType] -&gt; ShowS
+$cshowList :: [BugType] -&gt; ShowS
+show :: BugType -&gt; String
+$cshow :: BugType -&gt; String
+showsPrec :: Int -&gt; BugType -&gt; ShowS
+$cshowsPrec :: Int -&gt; BugType -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span class="hs-special">$(</span><span id="local-6989586621679351958"><span id="local-6989586621679351960"><span id="local-6989586621679351962"><span id="local-6989586621679351964"><span id="local-6989586621679351966"><span id="local-6989586621679351968"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BugType</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span>
+</span><span id="line-46"></span><span class="hs-comment">-- | Primary type of a single Bug</span><span>
+</span><span id="line-47"></span><span class="hs-keyword">data</span><span> </span><span id="Bug"><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier hs-var">Bug</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Bug"><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier hs-var">Bug</span></a></span></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="bugId"><span class="annot"><span class="annottext">Bug -&gt; Int64
+</span><a href="ApiTypes.html#bugId"><span class="hs-identifier hs-var hs-var">bugId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-49"></span><span>    </span><span id="bugDateModified"><span class="annot"><span class="annottext">Bug -&gt; String
+</span><a href="ApiTypes.html#bugDateModified"><span class="hs-identifier hs-var hs-var">bugDateModified</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-50"></span><span>    </span><span id="bugSeverity"><span class="annot"><span class="annottext">Bug -&gt; BugSeverity
+</span><a href="ApiTypes.html#bugSeverity"><span class="hs-identifier hs-var hs-var">bugSeverity</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#BugSeverity"><span class="hs-identifier hs-type">BugSeverity</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>    </span><span id="bugType"><span class="annot"><span class="annottext">Bug -&gt; BugType
+</span><a href="ApiTypes.html#bugType"><span class="hs-identifier hs-var hs-var">bugType</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#BugType"><span class="hs-identifier hs-type">BugType</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>    </span><span id="bugTitle"><span class="annot"><span class="annottext">Bug -&gt; String
+</span><a href="ApiTypes.html#bugTitle"><span class="hs-identifier hs-var hs-var">bugTitle</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>    </span><span id="bugStatus"><span class="annot"><span class="annottext">Bug -&gt; BugStatus
+</span><a href="ApiTypes.html#bugStatus"><span class="hs-identifier hs-var hs-var">bugStatus</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#BugStatus"><span class="hs-identifier hs-type">BugStatus</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>    </span><span id="bugTags"><span class="annot"><span class="annottext">Bug -&gt; Maybe String
+</span><a href="ApiTypes.html#bugTags"><span class="hs-identifier hs-var hs-var">bugTags</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span id="bugSpellId"><span class="annot"><span class="annottext">Bug -&gt; Int
+</span><a href="ApiTypes.html#bugSpellId"><span class="hs-identifier hs-var hs-var">bugSpellId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>    </span><span id="bugBuildId"><span class="annot"><span class="annottext">Bug -&gt; Int
+</span><a href="ApiTypes.html#bugBuildId"><span class="hs-identifier hs-var hs-var">bugBuildId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>    </span><span id="bugSpec"><span class="annot"><span class="annottext">Bug -&gt; Specialisation
+</span><a href="ApiTypes.html#bugSpec"><span class="hs-identifier hs-var hs-var">bugSpec</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#Specialisation"><span class="hs-identifier hs-type">Specialisation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>    </span><span id="bugBlueTrackerLink"><span class="annot"><span class="annottext">Bug -&gt; Maybe String
+</span><a href="ApiTypes.html#bugBlueTrackerLink"><span class="hs-identifier hs-var hs-var">bugBlueTrackerLink</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-59"></span><span>    </span><span id="bugSpellName"><span class="annot"><span class="annottext">Bug -&gt; Maybe String
+</span><a href="ApiTypes.html#bugSpellName"><span class="hs-identifier hs-var hs-var">bugSpellName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-60"></span><span>    </span><span id="bugUserName"><span class="annot"><span class="annottext">Bug -&gt; Maybe String
+</span><a href="ApiTypes.html#bugUserName"><span class="hs-identifier hs-var hs-var">bugUserName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>    </span><span id="bugUserId"><span class="annot"><span class="annottext">Bug -&gt; Int64
+</span><a href="ApiTypes.html#bugUserId"><span class="hs-identifier hs-var hs-var">bugUserId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>    </span><span id="bugBuildString"><span class="annot"><span class="annottext">Bug -&gt; Maybe String
+</span><a href="ApiTypes.html#bugBuildString"><span class="hs-identifier hs-var hs-var">bugBuildString</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-63"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351936"><span id="local-6989586621679351938"><span id="local-6989586621679351940"><span class="annot"><span class="annottext">Int -&gt; Bug -&gt; ShowS
+[Bug] -&gt; ShowS
+Bug -&gt; String
+(Int -&gt; Bug -&gt; ShowS)
+-&gt; (Bug -&gt; String) -&gt; ([Bug] -&gt; ShowS) -&gt; Show Bug
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Bug] -&gt; ShowS
+$cshowList :: [Bug] -&gt; ShowS
+show :: Bug -&gt; String
+$cshow :: Bug -&gt; String
+showsPrec :: Int -&gt; Bug -&gt; ShowS
+$cshowsPrec :: Int -&gt; Bug -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span class="hs-special">$(</span><span id="local-6989586621679351924"><span id="local-6989586621679351926"><span id="local-6989586621679351928"><span id="local-6989586621679351930"><span id="local-6989586621679351932"><span id="local-6989586621679351934"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">Bug</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-65"></span><span>
+</span><span id="line-66"></span><span class="hs-comment">-- | Detailed representation of a Bug including the Content fields</span><span>
+</span><span id="line-67"></span><span class="hs-keyword">data</span><span> </span><span id="BugDetail"><span class="annot"><a href="ApiTypes.html#BugDetail"><span class="hs-identifier hs-var">BugDetail</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="BugDetail"><span class="annot"><a href="ApiTypes.html#BugDetail"><span class="hs-identifier hs-var">BugDetail</span></a></span></span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="bugdtId"><span class="annot"><span class="annottext">BugDetail -&gt; Int64
+</span><a href="ApiTypes.html#bugdtId"><span class="hs-identifier hs-var hs-var">bugdtId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-69"></span><span>    </span><span id="bugdtDateCreated"><span class="annot"><span class="annottext">BugDetail -&gt; String
+</span><a href="ApiTypes.html#bugdtDateCreated"><span class="hs-identifier hs-var hs-var">bugdtDateCreated</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-70"></span><span>    </span><span id="bugdtDateModified"><span class="annot"><span class="annottext">BugDetail -&gt; Maybe String
+</span><a href="ApiTypes.html#bugdtDateModified"><span class="hs-identifier hs-var hs-var">bugdtDateModified</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-71"></span><span>    </span><span id="bugdtSeverity"><span class="annot"><span class="annottext">BugDetail -&gt; BugSeverity
+</span><a href="ApiTypes.html#bugdtSeverity"><span class="hs-identifier hs-var hs-var">bugdtSeverity</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#BugSeverity"><span class="hs-identifier hs-type">BugSeverity</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-72"></span><span>    </span><span id="bugdtType"><span class="annot"><span class="annottext">BugDetail -&gt; BugType
+</span><a href="ApiTypes.html#bugdtType"><span class="hs-identifier hs-var hs-var">bugdtType</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#BugType"><span class="hs-identifier hs-type">BugType</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>    </span><span id="bugdtTitle"><span class="annot"><span class="annottext">BugDetail -&gt; String
+</span><a href="ApiTypes.html#bugdtTitle"><span class="hs-identifier hs-var hs-var">bugdtTitle</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>    </span><span id="bugdtStatus"><span class="annot"><span class="annottext">BugDetail -&gt; BugStatus
+</span><a href="ApiTypes.html#bugdtStatus"><span class="hs-identifier hs-var hs-var">bugdtStatus</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#BugStatus"><span class="hs-identifier hs-type">BugStatus</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-75"></span><span>    </span><span id="bugdtTags"><span class="annot"><span class="annottext">BugDetail -&gt; Maybe String
+</span><a href="ApiTypes.html#bugdtTags"><span class="hs-identifier hs-var hs-var">bugdtTags</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-76"></span><span>    </span><span id="bugdtSpellId"><span class="annot"><span class="annottext">BugDetail -&gt; Int
+</span><a href="ApiTypes.html#bugdtSpellId"><span class="hs-identifier hs-var hs-var">bugdtSpellId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-77"></span><span>    </span><span id="bugdtBuildId"><span class="annot"><span class="annottext">BugDetail -&gt; Int
+</span><a href="ApiTypes.html#bugdtBuildId"><span class="hs-identifier hs-var hs-var">bugdtBuildId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>    </span><span id="bugdtSpec"><span class="annot"><span class="annottext">BugDetail -&gt; Specialisation
+</span><a href="ApiTypes.html#bugdtSpec"><span class="hs-identifier hs-var hs-var">bugdtSpec</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="ApiTypes.html#Specialisation"><span class="hs-identifier hs-type">Specialisation</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-79"></span><span>    </span><span id="bugdtDescription"><span class="annot"><span class="annottext">BugDetail -&gt; Maybe String
+</span><a href="ApiTypes.html#bugdtDescription"><span class="hs-identifier hs-var hs-var">bugdtDescription</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-80"></span><span>    </span><span id="bugdtSteps"><span class="annot"><span class="annottext">BugDetail -&gt; Maybe String
+</span><a href="ApiTypes.html#bugdtSteps"><span class="hs-identifier hs-var hs-var">bugdtSteps</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-81"></span><span>    </span><span id="bugdtContent"><span class="annot"><span class="annottext">BugDetail -&gt; Maybe String
+</span><a href="ApiTypes.html#bugdtContent"><span class="hs-identifier hs-var hs-var">bugdtContent</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-82"></span><span>    </span><span id="bugdtBlueTrackerLink"><span class="annot"><span class="annottext">BugDetail -&gt; Maybe String
+</span><a href="ApiTypes.html#bugdtBlueTrackerLink"><span class="hs-identifier hs-var hs-var">bugdtBlueTrackerLink</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-83"></span><span>    </span><span id="bugdtSubmitter"><span class="annot"><span class="annottext">BugDetail -&gt; Int64
+</span><a href="ApiTypes.html#bugdtSubmitter"><span class="hs-identifier hs-var hs-var">bugdtSubmitter</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span>
+</span><span id="line-84"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351901"><span id="local-6989586621679351903"><span id="local-6989586621679351905"><span class="annot"><span class="annottext">Int -&gt; BugDetail -&gt; ShowS
+[BugDetail] -&gt; ShowS
+BugDetail -&gt; String
+(Int -&gt; BugDetail -&gt; ShowS)
+-&gt; (BugDetail -&gt; String)
+-&gt; ([BugDetail] -&gt; ShowS)
+-&gt; Show BugDetail
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BugDetail] -&gt; ShowS
+$cshowList :: [BugDetail] -&gt; ShowS
+show :: BugDetail -&gt; String
+$cshow :: BugDetail -&gt; String
+showsPrec :: Int -&gt; BugDetail -&gt; ShowS
+$cshowsPrec :: Int -&gt; BugDetail -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span class="hs-special">$(</span><span id="local-6989586621679351889"><span id="local-6989586621679351891"><span id="local-6989586621679351893"><span id="local-6989586621679351895"><span id="local-6989586621679351897"><span id="local-6989586621679351899"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BugDetail</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- | Api representation of a GameData build</span><span>
+</span><span id="line-88"></span><span class="hs-keyword">data</span><span> </span><span id="BuildT"><span class="annot"><a href="ApiTypes.html#BuildT"><span class="hs-identifier hs-var">BuildT</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="BuildT"><span class="annot"><a href="ApiTypes.html#BuildT"><span class="hs-identifier hs-var">BuildT</span></a></span></span><span>
+</span><span id="line-89"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="buildIdT"><span class="annot"><span class="annottext">BuildT -&gt; Int
+</span><a href="ApiTypes.html#buildIdT"><span class="hs-identifier hs-var hs-var">buildIdT</span></a></span></span><span>       </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-90"></span><span>    </span><span id="buildStringT"><span class="annot"><span class="annottext">BuildT -&gt; String
+</span><a href="ApiTypes.html#buildStringT"><span class="hs-identifier hs-var hs-var">buildStringT</span></a></span></span><span>   </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-91"></span><span>    </span><span id="buildDateT"><span class="annot"><span class="annottext">BuildT -&gt; String
+</span><a href="ApiTypes.html#buildDateT"><span class="hs-identifier hs-var hs-var">buildDateT</span></a></span></span><span>     </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-92"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351881"><span id="local-6989586621679351883"><span class="annot"><span class="annottext">BuildT -&gt; BuildT -&gt; Bool
+(BuildT -&gt; BuildT -&gt; Bool)
+-&gt; (BuildT -&gt; BuildT -&gt; Bool) -&gt; Eq BuildT
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: BuildT -&gt; BuildT -&gt; Bool
+$c/= :: BuildT -&gt; BuildT -&gt; Bool
+== :: BuildT -&gt; BuildT -&gt; Bool
+$c== :: BuildT -&gt; BuildT -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679351874"><span id="local-6989586621679351876"><span id="local-6989586621679351878"><span class="annot"><span class="annottext">Int -&gt; BuildT -&gt; ShowS
+[BuildT] -&gt; ShowS
+BuildT -&gt; String
+(Int -&gt; BuildT -&gt; ShowS)
+-&gt; (BuildT -&gt; String) -&gt; ([BuildT] -&gt; ShowS) -&gt; Show BuildT
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BuildT] -&gt; ShowS
+$cshowList :: [BuildT] -&gt; ShowS
+show :: BuildT -&gt; String
+$cshow :: BuildT -&gt; String
+showsPrec :: Int -&gt; BuildT -&gt; ShowS
+$cshowsPrec :: Int -&gt; BuildT -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span class="hs-special">$(</span><span id="local-6989586621679351862"><span id="local-6989586621679351864"><span id="local-6989586621679351866"><span id="local-6989586621679351868"><span id="local-6989586621679351870"><span id="local-6989586621679351872"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BuildT</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-94"></span><span>
+</span><span id="line-95"></span><span class="hs-comment">-- | Api representation of a GameData Spell</span><span>
+</span><span id="line-96"></span><span class="hs-keyword">data</span><span> </span><span id="SpellT"><span class="annot"><a href="ApiTypes.html#SpellT"><span class="hs-identifier hs-var">SpellT</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="SpellT"><span class="annot"><a href="ApiTypes.html#SpellT"><span class="hs-identifier hs-var">SpellT</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-97"></span><span>    </span><span id="spellIdT"><span class="annot"><span class="annottext">SpellT -&gt; Int
+</span><a href="ApiTypes.html#spellIdT"><span class="hs-identifier hs-var hs-var">spellIdT</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span> </span><span>
+</span><span id="line-98"></span><span>    </span><span id="spellNameT"><span class="annot"><span class="annottext">SpellT -&gt; String
+</span><a href="ApiTypes.html#spellNameT"><span class="hs-identifier hs-var hs-var">spellNameT</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>    </span><span id="spellDescT"><span class="annot"><span class="annottext">SpellT -&gt; String
+</span><a href="ApiTypes.html#spellDescT"><span class="hs-identifier hs-var hs-var">spellDescT</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-100"></span><span>    </span><span id="spellBuildT"><span class="annot"><span class="annottext">SpellT -&gt; String
+</span><a href="ApiTypes.html#spellBuildT"><span class="hs-identifier hs-var hs-var">spellBuildT</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-101"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351853"><span id="local-6989586621679351855"><span class="annot"><span class="annottext">SpellT -&gt; SpellT -&gt; Bool
+(SpellT -&gt; SpellT -&gt; Bool)
+-&gt; (SpellT -&gt; SpellT -&gt; Bool) -&gt; Eq SpellT
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: SpellT -&gt; SpellT -&gt; Bool
+$c/= :: SpellT -&gt; SpellT -&gt; Bool
+== :: SpellT -&gt; SpellT -&gt; Bool
+$c== :: SpellT -&gt; SpellT -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679351847"><span id="local-6989586621679351849"><span id="local-6989586621679351851"><span class="annot"><span class="annottext">Int -&gt; SpellT -&gt; ShowS
+[SpellT] -&gt; ShowS
+SpellT -&gt; String
+(Int -&gt; SpellT -&gt; ShowS)
+-&gt; (SpellT -&gt; String) -&gt; ([SpellT] -&gt; ShowS) -&gt; Show SpellT
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [SpellT] -&gt; ShowS
+$cshowList :: [SpellT] -&gt; ShowS
+show :: SpellT -&gt; String
+$cshow :: SpellT -&gt; String
+showsPrec :: Int -&gt; SpellT -&gt; ShowS
+$cshowsPrec :: Int -&gt; SpellT -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-102"></span><span class="hs-special">$(</span><span id="local-6989586621679351835"><span id="local-6989586621679351837"><span id="local-6989586621679351839"><span id="local-6989586621679351841"><span id="local-6989586621679351843"><span id="local-6989586621679351845"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">SpellT</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-103"></span><span>
+</span><span id="line-104"></span><span class="hs-comment">-- | Api general ResponseMessage</span><span>
+</span><span id="line-105"></span><span class="hs-keyword">data</span><span> </span><span id="ResponseMessage"><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-var">ResponseMessage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="ResponseMessage"><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-var">ResponseMessage</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-106"></span><span>    </span><span id="resMessageStatusCode"><span class="annot"><span class="annottext">ResponseMessage -&gt; Int
+</span><a href="ApiTypes.html#resMessageStatusCode"><span class="hs-identifier hs-var hs-var">resMessageStatusCode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-107"></span><span>    </span><span id="resMessageStatus"><span class="annot"><span class="annottext">ResponseMessage -&gt; String
+</span><a href="ApiTypes.html#resMessageStatus"><span class="hs-identifier hs-var hs-var">resMessageStatus</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-108"></span><span>    </span><span id="resMessage"><span class="annot"><span class="annottext">ResponseMessage -&gt; String
+</span><a href="ApiTypes.html#resMessage"><span class="hs-identifier hs-var hs-var">resMessage</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-109"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351827"><span id="local-6989586621679351829"><span class="annot"><span class="annottext">ResponseMessage -&gt; ResponseMessage -&gt; Bool
+(ResponseMessage -&gt; ResponseMessage -&gt; Bool)
+-&gt; (ResponseMessage -&gt; ResponseMessage -&gt; Bool)
+-&gt; Eq ResponseMessage
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: ResponseMessage -&gt; ResponseMessage -&gt; Bool
+$c/= :: ResponseMessage -&gt; ResponseMessage -&gt; Bool
+== :: ResponseMessage -&gt; ResponseMessage -&gt; Bool
+$c== :: ResponseMessage -&gt; ResponseMessage -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679351821"><span id="local-6989586621679351823"><span id="local-6989586621679351825"><span class="annot"><span class="annottext">Int -&gt; ResponseMessage -&gt; ShowS
+[ResponseMessage] -&gt; ShowS
+ResponseMessage -&gt; String
+(Int -&gt; ResponseMessage -&gt; ShowS)
+-&gt; (ResponseMessage -&gt; String)
+-&gt; ([ResponseMessage] -&gt; ShowS)
+-&gt; Show ResponseMessage
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [ResponseMessage] -&gt; ShowS
+$cshowList :: [ResponseMessage] -&gt; ShowS
+show :: ResponseMessage -&gt; String
+$cshow :: ResponseMessage -&gt; String
+showsPrec :: Int -&gt; ResponseMessage -&gt; ShowS
+$cshowsPrec :: Int -&gt; ResponseMessage -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span class="hs-special">$(</span><span id="local-6989586621679351809"><span id="local-6989586621679351811"><span id="local-6989586621679351813"><span id="local-6989586621679351815"><span id="local-6989586621679351817"><span id="local-6989586621679351819"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">ResponseMessage</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-111"></span><span>
+</span><span id="line-112"></span><span class="hs-comment">-- | Api response type to a login request</span><span>
+</span><span id="line-113"></span><span class="hs-keyword">data</span><span> </span><span id="LoginResponseMessage"><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier hs-var">LoginResponseMessage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="LoginResponseMessage"><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier hs-var">LoginResponseMessage</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-114"></span><span>    </span><span id="lrmStatusCode"><span class="annot"><span class="annottext">LoginResponseMessage -&gt; Int
+</span><a href="ApiTypes.html#lrmStatusCode"><span class="hs-identifier hs-var hs-var">lrmStatusCode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-115"></span><span>    </span><span id="lrmMessage"><span class="annot"><span class="annottext">LoginResponseMessage -&gt; String
+</span><a href="ApiTypes.html#lrmMessage"><span class="hs-identifier hs-var hs-var">lrmMessage</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-116"></span><span>    </span><span id="lrmToken"><span class="annot"><span class="annottext">LoginResponseMessage -&gt; String
+</span><a href="ApiTypes.html#lrmToken"><span class="hs-identifier hs-var hs-var">lrmToken</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-117"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351801"><span id="local-6989586621679351803"><span class="annot"><span class="annottext">LoginResponseMessage -&gt; LoginResponseMessage -&gt; Bool
+(LoginResponseMessage -&gt; LoginResponseMessage -&gt; Bool)
+-&gt; (LoginResponseMessage -&gt; LoginResponseMessage -&gt; Bool)
+-&gt; Eq LoginResponseMessage
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: LoginResponseMessage -&gt; LoginResponseMessage -&gt; Bool
+$c/= :: LoginResponseMessage -&gt; LoginResponseMessage -&gt; Bool
+== :: LoginResponseMessage -&gt; LoginResponseMessage -&gt; Bool
+$c== :: LoginResponseMessage -&gt; LoginResponseMessage -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679351795"><span id="local-6989586621679351797"><span id="local-6989586621679351799"><span class="annot"><span class="annottext">Int -&gt; LoginResponseMessage -&gt; ShowS
+[LoginResponseMessage] -&gt; ShowS
+LoginResponseMessage -&gt; String
+(Int -&gt; LoginResponseMessage -&gt; ShowS)
+-&gt; (LoginResponseMessage -&gt; String)
+-&gt; ([LoginResponseMessage] -&gt; ShowS)
+-&gt; Show LoginResponseMessage
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [LoginResponseMessage] -&gt; ShowS
+$cshowList :: [LoginResponseMessage] -&gt; ShowS
+show :: LoginResponseMessage -&gt; String
+$cshow :: LoginResponseMessage -&gt; String
+showsPrec :: Int -&gt; LoginResponseMessage -&gt; ShowS
+$cshowsPrec :: Int -&gt; LoginResponseMessage -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-118"></span><span class="hs-special">$(</span><span id="local-6989586621679351783"><span id="local-6989586621679351785"><span id="local-6989586621679351787"><span id="local-6989586621679351789"><span id="local-6989586621679351791"><span id="local-6989586621679351793"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">LoginResponseMessage</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-119"></span><span>
+</span><span id="line-120"></span><span class="hs-comment">-- | Api response type to a Bug insertion, delete or update</span><span>
+</span><span id="line-121"></span><span class="hs-keyword">data</span><span> </span><span id="BugChangedResponseMessage"><span class="annot"><a href="ApiTypes.html#BugChangedResponseMessage"><span class="hs-identifier hs-var">BugChangedResponseMessage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="BugChangedResponseMessage"><span class="annot"><a href="ApiTypes.html#BugChangedResponseMessage"><span class="hs-identifier hs-var">BugChangedResponseMessage</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-122"></span><span>    </span><span id="bcMessageStatusCode"><span class="annot"><span class="annottext">BugChangedResponseMessage -&gt; Int
+</span><a href="ApiTypes.html#bcMessageStatusCode"><span class="hs-identifier hs-var hs-var">bcMessageStatusCode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-123"></span><span>    </span><span id="bcMessageBugId"><span class="annot"><span class="annottext">BugChangedResponseMessage -&gt; Int64
+</span><a href="ApiTypes.html#bcMessageBugId"><span class="hs-identifier hs-var hs-var">bcMessageBugId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-124"></span><span>    </span><span id="bcMessageStatus"><span class="annot"><span class="annottext">BugChangedResponseMessage -&gt; String
+</span><a href="ApiTypes.html#bcMessageStatus"><span class="hs-identifier hs-var hs-var">bcMessageStatus</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-125"></span><span>    </span><span id="bcMessage"><span class="annot"><span class="annottext">BugChangedResponseMessage -&gt; String
+</span><a href="ApiTypes.html#bcMessage"><span class="hs-identifier hs-var hs-var">bcMessage</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-126"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351774"><span id="local-6989586621679351776"><span class="annot"><span class="annottext">BugChangedResponseMessage -&gt; BugChangedResponseMessage -&gt; Bool
+(BugChangedResponseMessage -&gt; BugChangedResponseMessage -&gt; Bool)
+-&gt; (BugChangedResponseMessage -&gt; BugChangedResponseMessage -&gt; Bool)
+-&gt; Eq BugChangedResponseMessage
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: BugChangedResponseMessage -&gt; BugChangedResponseMessage -&gt; Bool
+$c/= :: BugChangedResponseMessage -&gt; BugChangedResponseMessage -&gt; Bool
+== :: BugChangedResponseMessage -&gt; BugChangedResponseMessage -&gt; Bool
+$c== :: BugChangedResponseMessage -&gt; BugChangedResponseMessage -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679351768"><span id="local-6989586621679351770"><span id="local-6989586621679351772"><span class="annot"><span class="annottext">Int -&gt; BugChangedResponseMessage -&gt; ShowS
+[BugChangedResponseMessage] -&gt; ShowS
+BugChangedResponseMessage -&gt; String
+(Int -&gt; BugChangedResponseMessage -&gt; ShowS)
+-&gt; (BugChangedResponseMessage -&gt; String)
+-&gt; ([BugChangedResponseMessage] -&gt; ShowS)
+-&gt; Show BugChangedResponseMessage
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [BugChangedResponseMessage] -&gt; ShowS
+$cshowList :: [BugChangedResponseMessage] -&gt; ShowS
+show :: BugChangedResponseMessage -&gt; String
+$cshow :: BugChangedResponseMessage -&gt; String
+showsPrec :: Int -&gt; BugChangedResponseMessage -&gt; ShowS
+$cshowsPrec :: Int -&gt; BugChangedResponseMessage -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-127"></span><span class="hs-special">$(</span><span id="local-6989586621679351756"><span id="local-6989586621679351758"><span id="local-6989586621679351760"><span id="local-6989586621679351762"><span id="local-6989586621679351764"><span id="local-6989586621679351766"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">BugChangedResponseMessage</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- | Api response type to a User insertion, delete or update</span><span>
+</span><span id="line-130"></span><span class="hs-keyword">data</span><span> </span><span id="UserChangedResponseMessage"><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-var">UserChangedResponseMessage</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UserChangedResponseMessage"><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-var">UserChangedResponseMessage</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-131"></span><span>    </span><span id="ucMessageStatusCode"><span class="annot"><span class="annottext">UserChangedResponseMessage -&gt; Int
+</span><a href="ApiTypes.html#ucMessageStatusCode"><span class="hs-identifier hs-var hs-var">ucMessageStatusCode</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-132"></span><span>    </span><span id="ucMessageUserId"><span class="annot"><span class="annottext">UserChangedResponseMessage -&gt; Int64
+</span><a href="ApiTypes.html#ucMessageUserId"><span class="hs-identifier hs-var hs-var">ucMessageUserId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-133"></span><span>    </span><span id="ucMessageStatus"><span class="annot"><span class="annottext">UserChangedResponseMessage -&gt; String
+</span><a href="ApiTypes.html#ucMessageStatus"><span class="hs-identifier hs-var hs-var">ucMessageStatus</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-134"></span><span>    </span><span id="ucMessage"><span class="annot"><span class="annottext">UserChangedResponseMessage -&gt; String
+</span><a href="ApiTypes.html#ucMessage"><span class="hs-identifier hs-var hs-var">ucMessage</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-135"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351747"><span id="local-6989586621679351749"><span class="annot"><span class="annottext">UserChangedResponseMessage -&gt; UserChangedResponseMessage -&gt; Bool
+(UserChangedResponseMessage -&gt; UserChangedResponseMessage -&gt; Bool)
+-&gt; (UserChangedResponseMessage
+    -&gt; UserChangedResponseMessage -&gt; Bool)
+-&gt; Eq UserChangedResponseMessage
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: UserChangedResponseMessage -&gt; UserChangedResponseMessage -&gt; Bool
+$c/= :: UserChangedResponseMessage -&gt; UserChangedResponseMessage -&gt; Bool
+== :: UserChangedResponseMessage -&gt; UserChangedResponseMessage -&gt; Bool
+$c== :: UserChangedResponseMessage -&gt; UserChangedResponseMessage -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679351741"><span id="local-6989586621679351743"><span id="local-6989586621679351745"><span class="annot"><span class="annottext">Int -&gt; UserChangedResponseMessage -&gt; ShowS
+[UserChangedResponseMessage] -&gt; ShowS
+UserChangedResponseMessage -&gt; String
+(Int -&gt; UserChangedResponseMessage -&gt; ShowS)
+-&gt; (UserChangedResponseMessage -&gt; String)
+-&gt; ([UserChangedResponseMessage] -&gt; ShowS)
+-&gt; Show UserChangedResponseMessage
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [UserChangedResponseMessage] -&gt; ShowS
+$cshowList :: [UserChangedResponseMessage] -&gt; ShowS
+show :: UserChangedResponseMessage -&gt; String
+$cshow :: UserChangedResponseMessage -&gt; String
+showsPrec :: Int -&gt; UserChangedResponseMessage -&gt; ShowS
+$cshowsPrec :: Int -&gt; UserChangedResponseMessage -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-136"></span><span class="hs-special">$(</span><span id="local-6989586621679351729"><span id="local-6989586621679351731"><span id="local-6989586621679351733"><span id="local-6989586621679351735"><span id="local-6989586621679351737"><span id="local-6989586621679351739"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">UserChangedResponseMessage</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-137"></span><span>
+</span><span id="line-138"></span><span class="hs-comment">-- | Representation of a single Comment</span><span>
+</span><span id="line-139"></span><span class="hs-keyword">data</span><span> </span><span id="Comment"><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier hs-var">Comment</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Comment"><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier hs-var">Comment</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-140"></span><span>  </span><span id="cId"><span class="annot"><span class="annottext">Comment -&gt; Int64
+</span><a href="ApiTypes.html#cId"><span class="hs-identifier hs-var hs-var">cId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-141"></span><span>  </span><span id="cCreatedTime"><span class="annot"><span class="annottext">Comment -&gt; String
+</span><a href="ApiTypes.html#cCreatedTime"><span class="hs-identifier hs-var hs-var">cCreatedTime</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-142"></span><span>  </span><span id="cModifiedTime"><span class="annot"><span class="annottext">Comment -&gt; String
+</span><a href="ApiTypes.html#cModifiedTime"><span class="hs-identifier hs-var hs-var">cModifiedTime</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-143"></span><span>  </span><span id="cUserId"><span class="annot"><span class="annottext">Comment -&gt; Int64
+</span><a href="ApiTypes.html#cUserId"><span class="hs-identifier hs-var hs-var">cUserId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-144"></span><span>  </span><span id="cUserName"><span class="annot"><span class="annottext">Comment -&gt; String
+</span><a href="ApiTypes.html#cUserName"><span class="hs-identifier hs-var hs-var">cUserName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-145"></span><span>  </span><span id="cUserRole"><span class="annot"><span class="annottext">Comment -&gt; Int
+</span><a href="ApiTypes.html#cUserRole"><span class="hs-identifier hs-var hs-var">cUserRole</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-146"></span><span>  </span><span id="cUserAvatar"><span class="annot"><span class="annottext">Comment -&gt; Int
+</span><a href="ApiTypes.html#cUserAvatar"><span class="hs-identifier hs-var hs-var">cUserAvatar</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-147"></span><span>  </span><span id="cBugId"><span class="annot"><span class="annottext">Comment -&gt; Int64
+</span><a href="ApiTypes.html#cBugId"><span class="hs-identifier hs-var hs-var">cBugId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-148"></span><span>  </span><span id="cStatus"><span class="annot"><span class="annottext">Comment -&gt; Int
+</span><a href="ApiTypes.html#cStatus"><span class="hs-identifier hs-var hs-var">cStatus</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-149"></span><span>  </span><span id="cBody"><span class="annot"><span class="annottext">Comment -&gt; String
+</span><a href="ApiTypes.html#cBody"><span class="hs-identifier hs-var hs-var">cBody</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-150"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679351712"><span id="local-6989586621679351714"><span id="local-6989586621679351716"><span class="annot"><span class="annottext">Int -&gt; Comment -&gt; ShowS
+[Comment] -&gt; ShowS
+Comment -&gt; String
+(Int -&gt; Comment -&gt; ShowS)
+-&gt; (Comment -&gt; String) -&gt; ([Comment] -&gt; ShowS) -&gt; Show Comment
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Comment] -&gt; ShowS
+$cshowList :: [Comment] -&gt; ShowS
+show :: Comment -&gt; String
+$cshow :: Comment -&gt; String
+showsPrec :: Int -&gt; Comment -&gt; ShowS
+$cshowsPrec :: Int -&gt; Comment -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-151"></span><span class="hs-special">$(</span><span id="local-6989586621679351700"><span id="local-6989586621679351702"><span id="local-6989586621679351704"><span id="local-6989586621679351706"><span id="local-6989586621679351708"><span id="local-6989586621679351710"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">Comment</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-152"></span><span>
+</span><span id="line-153"></span><span>
+</span><span id="line-154"></span><span>
+</span><span id="line-155"></span></pre></body></html>

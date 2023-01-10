@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Handlers related to Common API endpoints</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">CommonApi</span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">(</span><span> </span><span>
+</span><span id="line-6"></span><span>        </span><span class="annot"><a href="CommonApi.html#versionHandler"><span class="hs-identifier">versionHandler</span></a></span><span>
+</span><span id="line-7"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-8"></span><span class="hs-comment">---</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Handler</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftIO</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-comment">---</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ApiTypes.html"><span class="hs-identifier">ApiTypes</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span class="hs-special">(</span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-comment">---</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | The base version of the API</span><span>
+</span><span id="line-16"></span><span class="annot"><a href="CommonApi.html#apiVersion"><span class="hs-identifier hs-type">apiVersion</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-17"></span><span id="apiVersion"><span class="annot"><span class="annottext">apiVersion :: String
+</span><a href="CommonApi.html#apiVersion"><span class="hs-identifier hs-var hs-var">apiVersion</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-string">&quot;0.0.1.0&quot;</span></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- | Handles fetching the base version of the API</span><span>
+</span><span id="line-20"></span><span class="annot"><a href="CommonApi.html#versionHandler"><span class="hs-identifier hs-type">versionHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-21"></span><span id="versionHandler"><span class="annot"><span class="annottext">versionHandler :: Handler ResponseMessage
+</span><a href="CommonApi.html#versionHandler"><span class="hs-identifier hs-var hs-var">versionHandler</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO ResponseMessage -&gt; Handler ResponseMessage
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO ResponseMessage -&gt; Handler ResponseMessage)
+-&gt; IO ResponseMessage -&gt; Handler ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ResponseMessage -&gt; IO ResponseMessage
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(ResponseMessage -&gt; IO ResponseMessage)
+-&gt; ResponseMessage -&gt; IO ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String -&gt; ResponseMessage
+</span><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-var">ResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">200</span></span><span> </span><span class="annot"><span class="hs-string">&quot;OK&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="CommonApi.html#apiVersion"><span class="hs-identifier hs-var">apiVersion</span></a></span><span>
+</span><span id="line-22"></span></pre></body></html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | toolchain of utils used throughout the application</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Utils</span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span>
+</span><span id="line-4"></span><span>      </span><span class="annot"><a href="Utils.html#ApiError"><span class="hs-identifier">ApiError</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>      </span><span class="annot"><a href="Utils.html#ValidationResult"><span class="hs-identifier">ValidationResult</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span class="hs-comment">---</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Exception</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-comment">---</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-comment">-- | Generic API error type used for user input validation</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">data</span><span> </span><span id="ApiError"><span class="annot"><a href="Utils.html#ApiError"><span class="hs-identifier hs-var">ApiError</span></a></span></span><span> </span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="ValidationError"><span class="annot"><a href="Utils.html#ValidationError"><span class="hs-identifier hs-var">ValidationError</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-14"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="ResourceNotFoundError"><span class="annot"><a href="Utils.html#ResourceNotFoundError"><span class="hs-identifier hs-var">ResourceNotFoundError</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679353571"><span id="local-6989586621679353573"><span id="local-6989586621679353575"><span class="annot"><span class="annottext">Int -&gt; ApiError -&gt; ShowS
+[ApiError] -&gt; ShowS
+ApiError -&gt; String
+(Int -&gt; ApiError -&gt; ShowS)
+-&gt; (ApiError -&gt; String) -&gt; ([ApiError] -&gt; ShowS) -&gt; Show ApiError
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [ApiError] -&gt; ShowS
+$cshowList :: [ApiError] -&gt; ShowS
+show :: ApiError -&gt; String
+$cshow :: ApiError -&gt; String
+showsPrec :: Int -&gt; ApiError -&gt; ShowS
+$cshowsPrec :: Int -&gt; ApiError -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span>
+</span><span id="line-17"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679353562"><span id="local-6989586621679353564"><span id="local-6989586621679353566"><span class="annot"><span class="hs-identifier hs-type">Exception</span></span><span> </span><span class="annot"><a href="Utils.html#ApiError"><span class="hs-identifier hs-type">ApiError</span></a></span></span></span></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- | Validation result used when parsing user login data inputs</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">data</span><span> </span><span id="ValidationResult"><span class="annot"><a href="Utils.html#ValidationResult"><span class="hs-identifier hs-var">ValidationResult</span></a></span></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="Invalid"><span class="annot"><a href="Utils.html#Invalid"><span class="hs-identifier hs-var">Invalid</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="Valid"><span class="annot"><a href="Utils.html#Valid"><span class="hs-identifier hs-var">Valid</span></a></span></span><span> </span><span>
+</span><span id="line-23"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679353553"><span id="local-6989586621679353555"><span id="local-6989586621679353557"><span class="annot"><span class="annottext">Int -&gt; ValidationResult -&gt; ShowS
+[ValidationResult] -&gt; ShowS
+ValidationResult -&gt; String
+(Int -&gt; ValidationResult -&gt; ShowS)
+-&gt; (ValidationResult -&gt; String)
+-&gt; ([ValidationResult] -&gt; ShowS)
+-&gt; Show ValidationResult
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [ValidationResult] -&gt; ShowS
+$cshowList :: [ValidationResult] -&gt; ShowS
+show :: ValidationResult -&gt; String
+$cshow :: ValidationResult -&gt; String
+showsPrec :: Int -&gt; ValidationResult -&gt; ShowS
+$cshowsPrec :: Int -&gt; ValidationResult -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span></pre></body></html>

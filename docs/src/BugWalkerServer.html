@@ -1,0 +1,585 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE DataKinds       #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE TypeOperators   #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-4"></span><span>
+</span><span id="line-5"></span><span class="hs-comment">-- | Main module of the BugWalker WebAPI Server</span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">BugWalkerServer</span><span>
+</span><span id="line-7"></span><span>    </span><span class="hs-special">(</span><span>
+</span><span id="line-8"></span><span>      </span><span class="annot"><a href="BugWalkerServer.html#runServerWithJWT"><span class="hs-identifier">runServerWithJWT</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>      </span><span class="annot"><a href="BugWalkerServer.html#server"><span class="hs-identifier">server</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span class="hs-comment">---</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Time</span></span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Network.Wai</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Middleware</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">Application</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Network.Wai.Handler.Warp</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">run</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Network.Wai.Middleware.Cors</span></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">cors</span></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>      </span><span class="annot"><span class="hs-identifier">simpleCorsResourcePolicy</span></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><span class="hs-identifier">CorsResourcePolicy</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">corsMethods</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">corsRequestHeaders</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Network.Wai.Middleware.Servant.Options</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">provideOptions</span></span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant</span></span><span>
+</span><span id="line-21"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Proxy</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-22"></span><span>      </span><span class="annot"><span class="hs-identifier">serveWithContext</span></span><span class="hs-special">,</span><span>
+</span><span id="line-23"></span><span>      </span><span class="annot"><span class="hs-identifier">err401</span></span><span class="hs-special">,</span><span>
+</span><span id="line-24"></span><span>      </span><span class="hs-keyword">type</span><span> </span><span class="annot"><span class="hs-operator">(:&lt;|&gt;)</span></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-25"></span><span>      </span><span class="annot"><span class="hs-identifier">Capture</span></span><span class="hs-special">,</span><span>
+</span><span id="line-26"></span><span>      </span><span class="annot"><span class="hs-identifier">JSON</span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>      </span><span class="annot"><span class="hs-identifier">QueryParam</span></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>      </span><span class="annot"><span class="hs-identifier">ReqBody</span></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>      </span><span class="hs-keyword">type</span><span> </span><span class="annot"><span class="hs-operator">(:&gt;)</span></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>      </span><span class="annot"><span class="hs-identifier">Delete</span></span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>      </span><span class="annot"><span class="hs-identifier">Get</span></span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>      </span><span class="annot"><span class="hs-identifier">Post</span></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>      </span><span class="annot"><span class="hs-identifier">Put</span></span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>      </span><span class="annot"><span class="hs-identifier">Server</span></span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>      </span><span class="annot"><span class="hs-identifier">Context</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-operator">(:.)</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">EmptyContext</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant.Auth.Server</span></span><span>
+</span><span id="line-37"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">defaultCookieSettings</span></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>      </span><span class="annot"><span class="hs-identifier">defaultJWTSettings</span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>      </span><span class="annot"><span class="hs-identifier">Auth</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>      </span><span class="annot"><span class="hs-identifier">JWT</span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>      </span><span class="annot"><span class="hs-identifier">CookieSettings</span></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>      </span><span class="annot"><span class="hs-identifier">JWTSettings</span></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>      </span><span class="annot"><span class="hs-identifier">ThrowAll</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">throwAll</span></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>      </span><span class="annot"><span class="hs-identifier">AuthResult</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">Authenticated</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-45"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">when</span></span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Int</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Int64</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">ByteString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span class="hs-comment">---</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ApiTypes.html"><span class="hs-identifier">ApiTypes</span></a></span><span>
+</span><span id="line-50"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier">Bug</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BugChangedResponseMessage"><span class="hs-identifier">BugChangedResponseMessage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BugDetail"><span class="hs-identifier">BugDetail</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>      </span><span class="annot"><a href="ApiTypes.html#BuildT"><span class="hs-identifier">BuildT</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>      </span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier">Comment</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>      </span><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier">LoginResponseMessage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-56"></span><span>      </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-57"></span><span>      </span><span class="annot"><a href="ApiTypes.html#SpellT"><span class="hs-identifier">SpellT</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-58"></span><span>      </span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier">UserChangedResponseMessage</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-59"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AuthTypes.html"><span class="hs-identifier">AuthTypes</span></a></span><span>
+</span><span id="line-60"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier">AuthenticatedUser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-61"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserChangeRoleData"><span class="hs-identifier">UserChangeRoleData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserL"><span class="hs-identifier">UserL</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserLoginData"><span class="hs-identifier">UserLoginData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier">UserP</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier">UserRegistration</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="CommonApi.html"><span class="hs-identifier">CommonApi</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="CommonApi.html#versionHandler"><span class="hs-identifier">versionHandler</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AssetApi.html"><span class="hs-identifier">AssetApi</span></a></span><span>
+</span><span id="line-68"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="AssetApi.html#iohInitHandler"><span class="hs-identifier">iohInitHandler</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AssetApi.html#listBuildsHandler"><span class="hs-identifier">listBuildsHandler</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AssetApi.html#listSpellsHandler"><span class="hs-identifier">listSpellsHandler</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="BugApi.html"><span class="hs-identifier">BugApi</span></a></span><span>
+</span><span id="line-70"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="BugApi.html#deleteBugHandler"><span class="hs-identifier">deleteBugHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-71"></span><span>      </span><span class="annot"><a href="BugApi.html#getBugHandler"><span class="hs-identifier">getBugHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-72"></span><span>      </span><span class="annot"><a href="BugApi.html#getBugsByUserHandler"><span class="hs-identifier">getBugsByUserHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-73"></span><span>      </span><span class="annot"><a href="BugApi.html#getBugsHandler"><span class="hs-identifier">getBugsHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>      </span><span class="annot"><a href="BugApi.html#postBugHandler"><span class="hs-identifier">postBugHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-75"></span><span>      </span><span class="annot"><a href="BugApi.html#putBugHandler"><span class="hs-identifier">putBugHandler</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-76"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="UserApi.html"><span class="hs-identifier">UserApi</span></a></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="UserApi.html#userRegistrationHandler"><span class="hs-identifier">userRegistrationHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-78"></span><span>      </span><span class="annot"><a href="UserApi.html#userLoginHandler"><span class="hs-identifier">userLoginHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-79"></span><span>      </span><span class="annot"><a href="UserApi.html#getUsersHandler"><span class="hs-identifier">getUsersHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-80"></span><span>      </span><span class="annot"><a href="UserApi.html#getUserPHandler"><span class="hs-identifier">getUserPHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-81"></span><span>      </span><span class="annot"><a href="UserApi.html#changeUserRoleHandler"><span class="hs-identifier">changeUserRoleHandler</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-82"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="CommentApi.html"><span class="hs-identifier">CommentApi</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="CommentApi.html#getCommentsHandler"><span class="hs-identifier">getCommentsHandler</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="CommentApi.html#postCommentHandler"><span class="hs-identifier">postCommentHandler</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="CommentApi.html#deleteCommentHandler"><span class="hs-identifier">deleteCommentHandler</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="JwkStore.html"><span class="hs-identifier">JwkStore</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="JwkStore.html#loadJwk"><span class="hs-identifier">loadJwk</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-84"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Logging.html"><span class="hs-identifier">Logging</span></a></span><span>
+</span><span id="line-85"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Queue.html"><span class="hs-identifier">Queue</span></a></span><span>
+</span><span id="line-86"></span><span class="hs-comment">---</span><span>
+</span><span id="line-87"></span><span class="hs-comment">{- API -}</span><span>
+</span><span id="line-88"></span><span>
+</span><span id="line-89"></span><span class="hs-comment">-- | The unprotected (no auth) HTTP endpoints in the API</span><span>
+</span><span id="line-90"></span><span class="hs-keyword">type</span><span> </span><span id="Unprotected"><span class="annot"><a href="BugWalkerServer.html#Unprotected"><span class="hs-identifier hs-var">Unprotected</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-91"></span><span>  </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;version&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-92"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;builds&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#BuildT"><span class="hs-identifier hs-type">BuildT</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-93"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;spells&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#SpellT"><span class="hs-identifier hs-type">SpellT</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-94"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugs&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">QueryParam</span></span><span> </span><span class="annot"><span class="hs-string">&quot;limit&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier hs-type">Bug</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-95"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugs&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugId&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#BugDetail"><span class="hs-identifier hs-type">BugDetail</span></a></span><span>
+</span><span id="line-96"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugs&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;user&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;uId&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier hs-type">Bug</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-97"></span><span>  </span><span class="hs-comment">-- users</span><span>
+</span><span id="line-98"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;users&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;register&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReqBody</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier hs-type">AuthTypes.UserRegistration</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Post</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-type">UserChangedResponseMessage</span></a></span><span>
+</span><span id="line-99"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;users&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;login&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReqBody</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="AuthTypes.html#UserLoginData"><span class="hs-identifier hs-type">AuthTypes.UserLoginData</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Post</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier hs-type">LoginResponseMessage</span></a></span><span>
+</span><span id="line-100"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;users&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AuthTypes.html#UserL"><span class="hs-identifier hs-type">AuthTypes.UserL</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-101"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;user&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;uId&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier hs-type">AuthTypes.UserP</span></a></span><span>
+</span><span id="line-102"></span><span>  </span><span class="hs-comment">-- comments</span><span>
+</span><span id="line-103"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;comments&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugId&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier hs-type">Comment</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-104"></span><span>
+</span><span id="line-105"></span><span class="hs-comment">-- | The protected (auth) HTTP endpoints in the API</span><span>
+</span><span id="line-106"></span><span class="hs-keyword">type</span><span> </span><span id="Protected"><span class="annot"><a href="BugWalkerServer.html#Protected"><span class="hs-identifier hs-var">Protected</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-107"></span><span>  </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;secret&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span>
+</span><span id="line-108"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugs&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReqBody</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#BugDetail"><span class="hs-identifier hs-type">BugDetail</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Post</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#BugChangedResponseMessage"><span class="hs-identifier hs-type">BugChangedResponseMessage</span></a></span><span>
+</span><span id="line-109"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugs&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugId&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReqBody</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#BugDetail"><span class="hs-identifier hs-type">BugDetail</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Put</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#BugChangedResponseMessage"><span class="hs-identifier hs-type">BugChangedResponseMessage</span></a></span><span>
+</span><span id="line-110"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugs&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;bugId&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Delete</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#BugChangedResponseMessage"><span class="hs-identifier hs-type">BugChangedResponseMessage</span></a></span><span>
+</span><span id="line-111"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;ioh&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;init&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;source&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Get</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-112"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;user&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;role&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReqBody</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="AuthTypes.html#UserChangeRoleData"><span class="hs-identifier hs-type">AuthTypes.UserChangeRoleData</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Post</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-type">UserChangedResponseMessage</span></a></span><span>
+</span><span id="line-113"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;comments&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">ReqBody</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier hs-type">Comment</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Post</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-114"></span><span>  </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;api&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;comments&quot;</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Capture</span></span><span> </span><span class="annot"><span class="hs-string">&quot;cId&quot;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Delete</span></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JSON</span></span><span class="hs-special">]</span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-115"></span><span class="hs-comment">-- | Generates the protected Server by configuring the AuthenticatedUser</span><span>
+</span><span id="line-116"></span><span class="hs-comment">-- type as the user auth context</span><span>
+</span><span id="line-117"></span><span class="annot"><a href="BugWalkerServer.html#protected"><span class="hs-identifier hs-type">protected</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Servant.Auth.Server.AuthResult</span></span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-comment">-- ^ the auth result context</span><span>
+</span><span id="line-118"></span><span>          </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Server</span></span><span> </span><span class="annot"><a href="BugWalkerServer.html#Protected"><span class="hs-identifier hs-type">Protected</span></a></span><span> </span><span class="hs-comment">-- ^ The server for our protected endpoints</span><span>
+</span><span id="line-119"></span><span id="protected"><span class="annot"><span class="annottext">protected :: AuthResult AuthenticatedUser -&gt; Server Protected
+</span><a href="BugWalkerServer.html#protected"><span class="hs-identifier hs-var hs-var">protected</span></a></span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Servant.Auth.Server.Authenticated</span></span><span> </span><span id="local-6989586621679353840"><span class="annot"><span class="annottext">user :: AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-120"></span><span>  </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Handler AuthenticatedUser
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-121"></span><span>  </span><span class="annot"><span class="annottext">Handler AuthenticatedUser
+-&gt; ((BugDetail -&gt; Handler BugChangedResponseMessage)
+    :&lt;|&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+          :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+                :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                      :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                            :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                                  :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))))))
+-&gt; Handler AuthenticatedUser
+   :&lt;|&gt; ((BugDetail -&gt; Handler BugChangedResponseMessage)
+         :&lt;|&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+               :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+                     :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                           :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                                 :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                                       :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; BugDetail -&gt; Handler BugChangedResponseMessage
+</span><a href="BugApi.html#postBugHandler"><span class="hs-identifier hs-var">postBugHandler</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-122"></span><span>  </span><span class="annot"><span class="annottext">(BugDetail -&gt; Handler BugChangedResponseMessage)
+-&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+    :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+          :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                      :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                            :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))))))
+-&gt; (BugDetail -&gt; Handler BugChangedResponseMessage)
+   :&lt;|&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+         :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+               :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                     :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                           :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                                 :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+-&gt; Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage
+</span><a href="BugApi.html#putBugHandler"><span class="hs-identifier hs-var">putBugHandler</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-123"></span><span>  </span><span class="annot"><span class="annottext">(Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+-&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+    :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+          :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                      :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))))
+-&gt; (Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+   :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+         :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+               :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                     :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                           :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int64 -&gt; Handler BugChangedResponseMessage
+</span><a href="BugApi.html#deleteBugHandler"><span class="hs-identifier hs-var">deleteBugHandler</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-124"></span><span>  </span><span class="annot"><span class="annottext">(Int64 -&gt; Handler BugChangedResponseMessage)
+-&gt; ((String -&gt; Handler ResponseMessage)
+    :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+          :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))))
+-&gt; (Int64 -&gt; Handler BugChangedResponseMessage)
+   :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+         :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+               :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                     :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; String -&gt; Handler ResponseMessage
+</span><a href="AssetApi.html#iohInitHandler"><span class="hs-identifier hs-var">iohInitHandler</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-125"></span><span>  </span><span class="annot"><span class="annottext">(String -&gt; Handler ResponseMessage)
+-&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+    :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+          :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))
+-&gt; (String -&gt; Handler ResponseMessage)
+   :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+         :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+               :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+-&gt; UserChangeRoleData -&gt; Handler UserChangedResponseMessage
+</span><a href="UserApi.html#changeUserRoleHandler"><span class="hs-identifier hs-var">UserApi.changeUserRoleHandler</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-126"></span><span>  </span><span class="annot"><span class="annottext">(UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+-&gt; ((Comment -&gt; Handler ResponseMessage)
+    :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))
+-&gt; (UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+   :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+         :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Comment -&gt; Handler ResponseMessage
+</span><a href="CommentApi.html#postCommentHandler"><span class="hs-identifier hs-var">CommentApi.postCommentHandler</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-127"></span><span>  </span><span class="annot"><span class="annottext">(Comment -&gt; Handler ResponseMessage)
+-&gt; (Int64 -&gt; Handler ResponseMessage)
+-&gt; (Comment -&gt; Handler ResponseMessage)
+   :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int64 -&gt; Handler ResponseMessage
+</span><a href="CommentApi.html#deleteCommentHandler"><span class="hs-identifier hs-var">CommentApi.deleteCommentHandler</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353840"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-128"></span><span class="annot"><a href="BugWalkerServer.html#protected"><span class="hs-identifier hs-var">protected</span></a></span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ServerError
+-&gt; Handler AuthenticatedUser
+   :&lt;|&gt; ((BugDetail -&gt; Handler BugChangedResponseMessage)
+         :&lt;|&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+               :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+                     :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                           :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                                 :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                                       :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))))))
+forall a. ThrowAll a =&gt; ServerError -&gt; a
+</span><span class="hs-identifier hs-var">throwAll</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err401</span></span><span>
+</span><span id="line-129"></span><span>
+</span><span id="line-130"></span><span class="hs-comment">-- | Generates the unprotected Server</span><span>
+</span><span id="line-131"></span><span class="annot"><a href="BugWalkerServer.html#unprotected"><span class="hs-identifier hs-type">unprotected</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CookieSettings</span></span><span> </span><span class="hs-comment">-- ^ The configured cookie settings</span><span>
+</span><span id="line-132"></span><span>            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">JWTSettings</span></span><span> </span><span class="hs-comment">-- ^ the configured JWTSettings</span><span>
+</span><span id="line-133"></span><span>            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Server</span></span><span> </span><span class="annot"><a href="BugWalkerServer.html#Unprotected"><span class="hs-identifier hs-type">Unprotected</span></a></span><span> </span><span class="hs-comment">-- ^ The server for our unprotected endpoints</span><span>
+</span><span id="line-134"></span><span id="unprotected"><span class="annot"><span class="annottext">unprotected :: CookieSettings -&gt; JWTSettings -&gt; Server Unprotected
+</span><a href="BugWalkerServer.html#unprotected"><span class="hs-identifier hs-var hs-var">unprotected</span></a></span></span><span> </span><span id="local-6989586621679353837"><span class="annot"><span class="annottext">cs :: CookieSettings
+</span><a href="#local-6989586621679353837"><span class="hs-identifier hs-var">cs</span></a></span></span><span> </span><span id="local-6989586621679353836"><span class="annot"><span class="annottext">jwts :: JWTSettings
+</span><a href="#local-6989586621679353836"><span class="hs-identifier hs-var">jwts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-135"></span><span>  </span><span class="annot"><span class="annottext">Handler ResponseMessage
+</span><a href="CommonApi.html#versionHandler"><span class="hs-identifier hs-var">versionHandler</span></a></span><span>
+</span><span id="line-136"></span><span>  </span><span class="annot"><span class="annottext">Handler ResponseMessage
+-&gt; (Handler [BuildT]
+    :&lt;|&gt; (Handler [SpellT]
+          :&lt;|&gt; ((Maybe Int -&gt; Handler [Bug])
+                :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+                      :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                            :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                                  :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                                        :&lt;|&gt; (Handler [UserL]
+                                              :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                                    :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))))))))
+-&gt; Handler ResponseMessage
+   :&lt;|&gt; (Handler [BuildT]
+         :&lt;|&gt; (Handler [SpellT]
+               :&lt;|&gt; ((Maybe Int -&gt; Handler [Bug])
+                     :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+                           :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                                 :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                                       :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                                             :&lt;|&gt; (Handler [UserL]
+                                                   :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                                         :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Handler [BuildT]
+</span><a href="AssetApi.html#listBuildsHandler"><span class="hs-identifier hs-var">listBuildsHandler</span></a></span><span>
+</span><span id="line-137"></span><span>  </span><span class="annot"><span class="annottext">Handler [BuildT]
+-&gt; (Handler [SpellT]
+    :&lt;|&gt; ((Maybe Int -&gt; Handler [Bug])
+          :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+                :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                      :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                            :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                                  :&lt;|&gt; (Handler [UserL]
+                                        :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                              :&lt;|&gt; (Int64 -&gt; Handler [Comment])))))))))
+-&gt; Handler [BuildT]
+   :&lt;|&gt; (Handler [SpellT]
+         :&lt;|&gt; ((Maybe Int -&gt; Handler [Bug])
+               :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+                     :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                           :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                                 :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                                       :&lt;|&gt; (Handler [UserL]
+                                             :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                                   :&lt;|&gt; (Int64 -&gt; Handler [Comment])))))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Handler [SpellT]
+</span><a href="AssetApi.html#listSpellsHandler"><span class="hs-identifier hs-var">listSpellsHandler</span></a></span><span>
+</span><span id="line-138"></span><span>  </span><span class="annot"><span class="annottext">Handler [SpellT]
+-&gt; ((Maybe Int -&gt; Handler [Bug])
+    :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+          :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                      :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                            :&lt;|&gt; (Handler [UserL]
+                                  :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                        :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))))))
+-&gt; Handler [SpellT]
+   :&lt;|&gt; ((Maybe Int -&gt; Handler [Bug])
+         :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+               :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                     :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                           :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                                 :&lt;|&gt; (Handler [UserL]
+                                       :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                             :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Maybe Int -&gt; Handler [Bug]
+</span><a href="BugApi.html#getBugsHandler"><span class="hs-identifier hs-var">getBugsHandler</span></a></span><span>
+</span><span id="line-139"></span><span>  </span><span class="annot"><span class="annottext">(Maybe Int -&gt; Handler [Bug])
+-&gt; ((Int64 -&gt; Handler BugDetail)
+    :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+          :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                      :&lt;|&gt; (Handler [UserL]
+                            :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                  :&lt;|&gt; (Int64 -&gt; Handler [Comment])))))))
+-&gt; (Maybe Int -&gt; Handler [Bug])
+   :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+         :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+               :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                     :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                           :&lt;|&gt; (Handler [UserL]
+                                 :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                       :&lt;|&gt; (Int64 -&gt; Handler [Comment])))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Handler BugDetail
+</span><a href="BugApi.html#getBugHandler"><span class="hs-identifier hs-var">getBugHandler</span></a></span><span>
+</span><span id="line-140"></span><span>  </span><span class="annot"><span class="annottext">(Int64 -&gt; Handler BugDetail)
+-&gt; ((Int64 -&gt; Handler [Bug])
+    :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+          :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                :&lt;|&gt; (Handler [UserL]
+                      :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                            :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))))
+-&gt; (Int64 -&gt; Handler BugDetail)
+   :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+         :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+               :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                     :&lt;|&gt; (Handler [UserL]
+                           :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                 :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Handler [Bug]
+</span><a href="BugApi.html#getBugsByUserHandler"><span class="hs-identifier hs-var">getBugsByUserHandler</span></a></span><span>
+</span><span id="line-141"></span><span>  </span><span class="annot"><span class="annottext">(Int64 -&gt; Handler [Bug])
+-&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+    :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+          :&lt;|&gt; (Handler [UserL]
+                :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                      :&lt;|&gt; (Int64 -&gt; Handler [Comment])))))
+-&gt; (Int64 -&gt; Handler [Bug])
+   :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+         :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+               :&lt;|&gt; (Handler [UserL]
+                     :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                           :&lt;|&gt; (Int64 -&gt; Handler [Comment])))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">UserRegistration -&gt; Handler UserChangedResponseMessage
+</span><a href="UserApi.html#userRegistrationHandler"><span class="hs-identifier hs-var">UserApi.userRegistrationHandler</span></a></span><span>
+</span><span id="line-142"></span><span>  </span><span class="annot"><span class="annottext">(UserRegistration -&gt; Handler UserChangedResponseMessage)
+-&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+    :&lt;|&gt; (Handler [UserL]
+          :&lt;|&gt; ((Int64 -&gt; Handler UserP) :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))
+-&gt; (UserRegistration -&gt; Handler UserChangedResponseMessage)
+   :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+         :&lt;|&gt; (Handler [UserL]
+               :&lt;|&gt; ((Int64 -&gt; Handler UserP) :&lt;|&gt; (Int64 -&gt; Handler [Comment]))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">JWTSettings -&gt; UserLoginData -&gt; Handler LoginResponseMessage
+</span><a href="UserApi.html#userLoginHandler"><span class="hs-identifier hs-var">UserApi.userLoginHandler</span></a></span><span> </span><span class="annot"><span class="annottext">JWTSettings
+</span><a href="#local-6989586621679353836"><span class="hs-identifier hs-var">jwts</span></a></span><span>
+</span><span id="line-143"></span><span>  </span><span class="annot"><span class="annottext">(UserLoginData -&gt; Handler LoginResponseMessage)
+-&gt; (Handler [UserL]
+    :&lt;|&gt; ((Int64 -&gt; Handler UserP) :&lt;|&gt; (Int64 -&gt; Handler [Comment])))
+-&gt; (UserLoginData -&gt; Handler LoginResponseMessage)
+   :&lt;|&gt; (Handler [UserL]
+         :&lt;|&gt; ((Int64 -&gt; Handler UserP) :&lt;|&gt; (Int64 -&gt; Handler [Comment])))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Handler [UserL]
+</span><a href="UserApi.html#getUsersHandler"><span class="hs-identifier hs-var">UserApi.getUsersHandler</span></a></span><span>
+</span><span id="line-144"></span><span>  </span><span class="annot"><span class="annottext">Handler [UserL]
+-&gt; ((Int64 -&gt; Handler UserP) :&lt;|&gt; (Int64 -&gt; Handler [Comment]))
+-&gt; Handler [UserL]
+   :&lt;|&gt; ((Int64 -&gt; Handler UserP) :&lt;|&gt; (Int64 -&gt; Handler [Comment]))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Handler UserP
+</span><a href="UserApi.html#getUserPHandler"><span class="hs-identifier hs-var">UserApi.getUserPHandler</span></a></span><span>
+</span><span id="line-145"></span><span>  </span><span class="annot"><span class="annottext">(Int64 -&gt; Handler UserP)
+-&gt; (Int64 -&gt; Handler [Comment])
+-&gt; (Int64 -&gt; Handler UserP) :&lt;|&gt; (Int64 -&gt; Handler [Comment])
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; Handler [Comment]
+</span><a href="CommentApi.html#getCommentsHandler"><span class="hs-identifier hs-var">CommentApi.getCommentsHandler</span></a></span><span>
+</span><span id="line-146"></span><span>
+</span><span id="line-147"></span><span class="hs-comment">{- Server -}</span><span>
+</span><span id="line-148"></span><span>
+</span><span id="line-149"></span><span class="hs-keyword">type</span><span> </span><span id="API"><span class="annot"><a href="BugWalkerServer.html#API"><span class="hs-identifier hs-var">API</span></a></span></span><span> </span><span id="local-6989586621679353835"><span class="annot"><a href="#local-6989586621679353835"><span class="hs-identifier hs-type">auths</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Servant.Auth.Server.Auth</span></span><span> </span><span class="annot"><a href="#local-6989586621679353835"><span class="hs-identifier hs-type">auths</span></a></span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="annot"><span class="hs-operator hs-type">:&gt;</span></span><span> </span><span class="annot"><a href="BugWalkerServer.html#Protected"><span class="hs-identifier hs-type">Protected</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-operator hs-type">:&lt;|&gt;</span></span><span> </span><span class="annot"><a href="BugWalkerServer.html#Unprotected"><span class="hs-identifier hs-type">Unprotected</span></a></span><span>
+</span><span id="line-150"></span><span>
+</span><span id="line-151"></span><span class="hs-comment">-- | Creates the full server by combining the unprotcted and protected</span><span>
+</span><span id="line-152"></span><span class="hs-comment">-- servers and their auth contexts</span><span>
+</span><span id="line-153"></span><span id="local-6989586621679353889"><span class="annot"><a href="BugWalkerServer.html#server"><span class="hs-identifier hs-type">server</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CookieSettings</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">JWTSettings</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Server</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="BugWalkerServer.html#API"><span class="hs-identifier hs-type">API</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679353889"><span class="hs-identifier hs-type">auths</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-154"></span><span id="server"><span class="annot"><span class="annottext">server :: CookieSettings -&gt; JWTSettings -&gt; Server (API auths)
+</span><a href="BugWalkerServer.html#server"><span class="hs-identifier hs-var hs-var">server</span></a></span></span><span> </span><span id="local-6989586621679353834"><span class="annot"><span class="annottext">cs :: CookieSettings
+</span><a href="#local-6989586621679353834"><span class="hs-identifier hs-var">cs</span></a></span></span><span> </span><span id="local-6989586621679353833"><span class="annot"><span class="annottext">jwts :: JWTSettings
+</span><a href="#local-6989586621679353833"><span class="hs-identifier hs-var">jwts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">AuthResult AuthenticatedUser
+-&gt; Handler AuthenticatedUser
+   :&lt;|&gt; ((BugDetail -&gt; Handler BugChangedResponseMessage)
+         :&lt;|&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+               :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+                     :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                           :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                                 :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                                       :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage)))))))
+AuthResult AuthenticatedUser -&gt; Server Protected
+</span><a href="BugWalkerServer.html#protected"><span class="hs-identifier hs-var">protected</span></a></span><span> </span><span class="annot"><span class="annottext">(AuthResult AuthenticatedUser
+ -&gt; Handler AuthenticatedUser
+    :&lt;|&gt; ((BugDetail -&gt; Handler BugChangedResponseMessage)
+          :&lt;|&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+                :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+                      :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                            :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                                  :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                                        :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))))))))
+-&gt; (Handler ResponseMessage
+    :&lt;|&gt; (Handler [BuildT]
+          :&lt;|&gt; (Handler [SpellT]
+                :&lt;|&gt; ((Maybe Int -&gt; Handler [Bug])
+                      :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+                            :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                                  :&lt;|&gt; ((UserRegistration -&gt; Handler UserChangedResponseMessage)
+                                        :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                                              :&lt;|&gt; (Handler [UserL]
+                                                    :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                                          :&lt;|&gt; (Int64
+                                                                -&gt; Handler [Comment])))))))))))
+-&gt; (AuthResult AuthenticatedUser
+    -&gt; Handler AuthenticatedUser
+       :&lt;|&gt; ((BugDetail -&gt; Handler BugChangedResponseMessage)
+             :&lt;|&gt; ((Int64 -&gt; BugDetail -&gt; Handler BugChangedResponseMessage)
+                   :&lt;|&gt; ((Int64 -&gt; Handler BugChangedResponseMessage)
+                         :&lt;|&gt; ((String -&gt; Handler ResponseMessage)
+                               :&lt;|&gt; ((UserChangeRoleData -&gt; Handler UserChangedResponseMessage)
+                                     :&lt;|&gt; ((Comment -&gt; Handler ResponseMessage)
+                                           :&lt;|&gt; (Int64 -&gt; Handler ResponseMessage))))))))
+   :&lt;|&gt; (Handler ResponseMessage
+         :&lt;|&gt; (Handler [BuildT]
+               :&lt;|&gt; (Handler [SpellT]
+                     :&lt;|&gt; ((Maybe Int -&gt; Handler [Bug])
+                           :&lt;|&gt; ((Int64 -&gt; Handler BugDetail)
+                                 :&lt;|&gt; ((Int64 -&gt; Handler [Bug])
+                                       :&lt;|&gt; ((UserRegistration
+                                              -&gt; Handler UserChangedResponseMessage)
+                                             :&lt;|&gt; ((UserLoginData -&gt; Handler LoginResponseMessage)
+                                                   :&lt;|&gt; (Handler [UserL]
+                                                         :&lt;|&gt; ((Int64 -&gt; Handler UserP)
+                                                               :&lt;|&gt; (Int64
+                                                                     -&gt; Handler [Comment])))))))))))
+forall a b. a -&gt; b -&gt; a :&lt;|&gt; b
+</span><span class="hs-operator hs-var">:&lt;|&gt;</span></span><span> </span><span class="annot"><span class="annottext">CookieSettings -&gt; JWTSettings -&gt; Server Unprotected
+</span><a href="BugWalkerServer.html#unprotected"><span class="hs-identifier hs-var">unprotected</span></a></span><span> </span><span class="annot"><span class="annottext">CookieSettings
+</span><a href="#local-6989586621679353834"><span class="hs-identifier hs-var">cs</span></a></span><span> </span><span class="annot"><span class="annottext">JWTSettings
+</span><a href="#local-6989586621679353833"><span class="hs-identifier hs-var">jwts</span></a></span><span>
+</span><span id="line-155"></span><span>
+</span><span id="line-156"></span><span class="hs-comment">-- | Middleware for configuring CORS on the WAI server</span><span>
+</span><span id="line-157"></span><span class="annot"><a href="BugWalkerServer.html#allowCors"><span class="hs-identifier hs-type">allowCors</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Middleware</span></span><span>
+</span><span id="line-158"></span><span id="allowCors"><span class="annot"><span class="annottext">allowCors :: Middleware
+</span><a href="BugWalkerServer.html#allowCors"><span class="hs-identifier hs-var hs-var">allowCors</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(Request -&gt; Maybe CorsResourcePolicy) -&gt; Middleware
+</span><span class="hs-identifier hs-var">cors</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Maybe CorsResourcePolicy -&gt; Request -&gt; Maybe CorsResourcePolicy
+forall a b. a -&gt; b -&gt; a
+</span><span class="hs-identifier hs-var">const</span></span><span> </span><span class="annot"><span class="annottext">(Maybe CorsResourcePolicy -&gt; Request -&gt; Maybe CorsResourcePolicy)
+-&gt; Maybe CorsResourcePolicy -&gt; Request -&gt; Maybe CorsResourcePolicy
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">CorsResourcePolicy -&gt; Maybe CorsResourcePolicy
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">CorsResourcePolicy
+</span><a href="BugWalkerServer.html#appCorsResourcePolicy"><span class="hs-identifier hs-var">appCorsResourcePolicy</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-159"></span><span>
+</span><span id="line-160"></span><span class="hs-comment">-- | The CORS policy to use in the CORS WAI middleware</span><span>
+</span><span id="line-161"></span><span class="annot"><a href="BugWalkerServer.html#appCorsResourcePolicy"><span class="hs-identifier hs-type">appCorsResourcePolicy</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">CorsResourcePolicy</span></span><span>
+</span><span id="line-162"></span><span id="appCorsResourcePolicy"><span class="annot"><span class="annottext">appCorsResourcePolicy :: CorsResourcePolicy
+</span><a href="BugWalkerServer.html#appCorsResourcePolicy"><span class="hs-identifier hs-var hs-var">appCorsResourcePolicy</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-163"></span><span>    </span><span class="annot"><span class="annottext">CorsResourcePolicy
+</span><span class="hs-identifier hs-var">simpleCorsResourcePolicy</span></span><span>
+</span><span id="line-164"></span><span>        </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">corsMethods :: [Method]
+</span><span class="hs-identifier hs-var">corsMethods</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-string">&quot;OPTIONS&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-string">&quot;GET&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-string">&quot;PUT&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-string">&quot;POST&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-string">&quot;DELETE&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-165"></span><span>        </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">corsRequestHeaders :: [HeaderName]
+</span><span class="hs-identifier hs-var">corsRequestHeaders</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-string">&quot;Authorization&quot;</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-string">&quot;Content-Type&quot;</span></span><span class="hs-special">]</span><span>
+</span><span id="line-166"></span><span>        </span><span class="hs-special">}</span><span>
+</span><span id="line-167"></span><span>
+</span><span id="line-168"></span><span class="hs-comment">-- | Exports the Wai Application</span><span>
+</span><span id="line-169"></span><span class="hs-comment">-- ** Exclusively for testing the API - don't use this in production **</span><span>
+</span><span id="line-170"></span><span class="annot"><a href="BugWalkerServer.html#getTestApplication"><span class="hs-identifier hs-type">getTestApplication</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Network.Wai.Application</span></span><span>
+</span><span id="line-171"></span><span id="getTestApplication"><span class="annot"><span class="annottext">getTestApplication :: Int -&gt; Application
+</span><a href="BugWalkerServer.html#getTestApplication"><span class="hs-identifier hs-var hs-var">getTestApplication</span></a></span></span><span> </span><span id="local-6989586621679353828"><span class="annot"><span class="annottext">port :: Int
+</span><a href="#local-6989586621679353828"><span class="hs-identifier hs-var">port</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Application
+forall a. HasCallStack =&gt; a
+</span><span class="hs-identifier hs-var">undefined</span></span><span>
+</span><span id="line-172"></span><span>
+</span><span id="line-173"></span><span>
+</span><span id="line-174"></span><span class="hs-comment">-- | The main &quot;run&quot; function of the BugWalker API Server.</span><span>
+</span><span id="line-175"></span><span class="hs-comment">-- Attempts to run the full WAI server using JWT auth</span><span>
+</span><span id="line-176"></span><span class="annot"><a href="BugWalkerServer.html#runServerWithJWT"><span class="hs-identifier hs-type">runServerWithJWT</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="Logging.html#Logger"><span class="hs-identifier hs-type">Logging.Logger</span></a></span><span> </span><span class="hs-comment">-- ^ The logger to use</span><span>
+</span><span id="line-177"></span><span>                 </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-comment">-- ^ The port to run the server on</span><span>
+</span><span id="line-178"></span><span>                 </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-179"></span><span id="runServerWithJWT"><span class="annot"><span class="annottext">runServerWithJWT :: Logger -&gt; Int -&gt; IO ()
+</span><a href="BugWalkerServer.html#runServerWithJWT"><span class="hs-identifier hs-var hs-var">runServerWithJWT</span></a></span></span><span> </span><span id="local-6989586621679353826"><span class="annot"><span class="annottext">log :: Logger
+</span><a href="#local-6989586621679353826"><span class="hs-identifier hs-var">log</span></a></span></span><span> </span><span id="local-6989586621679353825"><span class="annot"><span class="annottext">port :: Int
+</span><a href="#local-6989586621679353825"><span class="hs-identifier hs-var">port</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-180"></span><span>  </span><span class="annot"><span class="annottext">Logger -&gt; Text -&gt; Text -&gt; IO ()
+forall l. Loggable l =&gt; l -&gt; Text -&gt; Text -&gt; IO ()
+</span><a href="Logging.html#logInfo"><span class="hs-identifier hs-var">Logging.logInfo</span></a></span><span> </span><span class="annot"><span class="annottext">Logger
+</span><a href="#local-6989586621679353826"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;BWS&quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Starting server...&quot;</span></span><span>
+</span><span id="line-181"></span><span>  </span><span class="hs-special">(</span><span id="local-6989586621679353823"><span class="annot"><span class="annottext">isLocal :: Bool
+</span><a href="#local-6989586621679353823"><span class="hs-identifier hs-var">isLocal</span></a></span></span><span class="hs-special">,</span><span id="local-6989586621679353822"><span class="annot"><span class="annottext">jwk :: JWK
+</span><a href="#local-6989586621679353822"><span class="hs-identifier hs-var">jwk</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO (Bool, JWK)
+</span><a href="JwkStore.html#loadJwk"><span class="hs-identifier hs-var">loadJwk</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;data/jwk&quot;</span></span><span>
+</span><span id="line-182"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679353823"><span class="hs-identifier hs-var">isLocal</span></a></span><span> </span><span class="hs-keyword">then</span><span>
+</span><span id="line-183"></span><span>    </span><span class="annot"><span class="annottext">Logger -&gt; Text -&gt; Text -&gt; IO ()
+forall l. Loggable l =&gt; l -&gt; Text -&gt; Text -&gt; IO ()
+</span><a href="Logging.html#logDebug"><span class="hs-identifier hs-var">Logging.logDebug</span></a></span><span> </span><span class="annot"><span class="annottext">Logger
+</span><a href="#local-6989586621679353826"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;BWS&quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Using local JWK&quot;</span></span><span>
+</span><span id="line-184"></span><span>  </span><span class="hs-keyword">else</span><span>
+</span><span id="line-185"></span><span>    </span><span class="annot"><span class="annottext">Logger -&gt; Text -&gt; Text -&gt; IO ()
+forall l. Loggable l =&gt; l -&gt; Text -&gt; Text -&gt; IO ()
+</span><a href="Logging.html#logDebug"><span class="hs-identifier hs-var">Logging.logDebug</span></a></span><span> </span><span class="annot"><span class="annottext">Logger
+</span><a href="#local-6989586621679353826"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;BWS&quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Generating new Jwk...&quot;</span></span><span>
+</span><span id="line-186"></span><span>  </span><span class="annot"><span class="annottext">Logger -&gt; Text -&gt; Text -&gt; IO ()
+forall l. Loggable l =&gt; l -&gt; Text -&gt; Text -&gt; IO ()
+</span><a href="Logging.html#logDebug"><span class="hs-identifier hs-var">Logging.logDebug</span></a></span><span> </span><span class="annot"><span class="annottext">Logger
+</span><a href="#local-6989586621679353826"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;BWS&quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Loaded JWK, generating proxy ...&quot;</span></span><span>
+</span><span id="line-187"></span><span>  </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679353820"><span class="annot"><span class="annottext">jwtCfg :: JWTSettings
+</span><a href="#local-6989586621679353820"><span class="hs-identifier hs-var hs-var">jwtCfg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">JWK -&gt; JWTSettings
+</span><span class="hs-identifier hs-var">defaultJWTSettings</span></span><span> </span><span class="annot"><span class="annottext">JWK
+</span><a href="#local-6989586621679353822"><span class="hs-identifier hs-var">jwk</span></a></span><span>
+</span><span id="line-188"></span><span>      </span><span id="local-6989586621679353819"><span class="annot"><span class="annottext">cfg :: Context '[CookieSettings, JWTSettings]
+</span><a href="#local-6989586621679353819"><span class="hs-identifier hs-var hs-var">cfg</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">CookieSettings
+</span><span class="hs-identifier hs-var">defaultCookieSettings</span></span><span> </span><span class="annot"><span class="annottext">CookieSettings
+-&gt; Context '[JWTSettings] -&gt; Context '[CookieSettings, JWTSettings]
+forall x (xs :: [*]). x -&gt; Context xs -&gt; Context (x : xs)
+</span><span class="hs-operator hs-var">:.</span></span><span> </span><span class="annot"><span class="annottext">JWTSettings
+</span><a href="#local-6989586621679353820"><span class="hs-identifier hs-var">jwtCfg</span></a></span><span> </span><span class="annot"><span class="annottext">JWTSettings -&gt; Context '[] -&gt; Context '[JWTSettings]
+forall x (xs :: [*]). x -&gt; Context xs -&gt; Context (x : xs)
+</span><span class="hs-operator hs-var">:.</span></span><span> </span><span class="annot"><span class="annottext">Context '[]
+</span><span class="hs-identifier hs-var">EmptyContext</span></span><span>
+</span><span id="line-189"></span><span>      </span><span id="local-6989586621679353818"><span class="annot"><span class="annottext">api :: Proxy (API '[JWT])
+</span><a href="#local-6989586621679353818"><span class="hs-identifier hs-var hs-var">api</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Proxy (API '[JWT])
+forall k (t :: k). Proxy t
+</span><span class="hs-identifier hs-var">Proxy</span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Proxy</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="BugWalkerServer.html#API"><span class="hs-identifier hs-type">API</span></a></span><span> </span><span class="hs-special">'</span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">JWT</span></span><span class="hs-special">]</span><span class="hs-special">)</span><span>
+</span><span id="line-190"></span><span>  </span><span class="annot"><span class="annottext">Logger -&gt; Text -&gt; Text -&gt; IO ()
+forall l. Loggable l =&gt; l -&gt; Text -&gt; Text -&gt; IO ()
+</span><a href="Logging.html#logDebug"><span class="hs-identifier hs-var">Logging.logDebug</span></a></span><span> </span><span class="annot"><span class="annottext">Logger
+</span><a href="#local-6989586621679353826"><span class="hs-identifier hs-var">log</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;BugWalkerServer&quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Init Complete. Running WebServer...&quot;</span></span><span>
+</span><span id="line-191"></span><span>  </span><span class="annot"><span class="annottext">Int -&gt; Application -&gt; IO ()
+</span><span class="hs-identifier hs-var">run</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679353825"><span class="hs-identifier hs-var">port</span></a></span><span> </span><span class="annot"><span class="annottext">(Application -&gt; IO ()) -&gt; Application -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Middleware
+</span><a href="BugWalkerServer.html#allowCors"><span class="hs-identifier hs-var">allowCors</span></a></span><span> </span><span class="annot"><span class="annottext">Middleware -&gt; Middleware
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Proxy (API '[JWT])
+-&gt; Context '[CookieSettings, JWTSettings]
+-&gt; Server (API '[JWT])
+-&gt; Application
+forall api (context :: [*]).
+HasServer api context =&gt;
+Proxy api -&gt; Context context -&gt; Server api -&gt; Application
+</span><span class="hs-identifier hs-var">serveWithContext</span></span><span> </span><span class="annot"><span class="annottext">Proxy (API '[JWT])
+</span><a href="#local-6989586621679353818"><span class="hs-identifier hs-var">api</span></a></span><span> </span><span class="annot"><span class="annottext">Context '[CookieSettings, JWTSettings]
+</span><a href="#local-6989586621679353819"><span class="hs-identifier hs-var">cfg</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">CookieSettings -&gt; JWTSettings -&gt; Server (API Any)
+forall (auths :: [*]).
+CookieSettings -&gt; JWTSettings -&gt; Server (API auths)
+</span><a href="BugWalkerServer.html#server"><span class="hs-identifier hs-var">server</span></a></span><span> </span><span class="annot"><span class="annottext">CookieSettings
+</span><span class="hs-identifier hs-var">defaultCookieSettings</span></span><span> </span><span class="annot"><span class="annottext">JWTSettings
+</span><a href="#local-6989586621679353820"><span class="hs-identifier hs-var">jwtCfg</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-192"></span></pre></body></html>

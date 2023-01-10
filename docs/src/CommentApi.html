@@ -1,0 +1,202 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Handlers related to Comment API endpoints</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">CommentApi</span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">(</span><span>
+</span><span id="line-6"></span><span>      </span><span class="annot"><a href="CommentApi.html#getCommentsHandler"><span class="hs-identifier">getCommentsHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>      </span><span class="annot"><a href="CommentApi.html#getCommentsByUserHandler"><span class="hs-identifier">getCommentsByUserHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>      </span><span class="annot"><a href="CommentApi.html#postCommentHandler"><span class="hs-identifier">postCommentHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-9"></span><span>      </span><span class="annot"><a href="CommentApi.html#deleteCommentHandler"><span class="hs-identifier">deleteCommentHandler</span></a></span><span>
+</span><span id="line-10"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-11"></span><span class="hs-comment">---</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant</span></span><span>
+</span><span id="line-13"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">throwError</span></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>      </span><span class="annot"><span class="hs-identifier">Handler</span></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>      </span><span class="annot"><span class="hs-identifier">err400</span></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>      </span><span class="annot"><span class="hs-identifier">err401</span></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>      </span><span class="annot"><span class="hs-identifier">err500</span></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><span class="hs-identifier">ServerError</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">errBody</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftIO</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">pack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">unless</span></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Lazy.Internal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">packChars</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Int</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Int64</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-comment">---</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AuthTypes.html"><span class="hs-identifier">AuthTypes</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="AuthTypes.html#isUserInit"><span class="hs-identifier">isUserInit</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier">AuthenticatedUser</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="IOH.html"><span class="hs-identifier">IOH</span></a></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="IOH.html#getComments"><span class="hs-identifier">getComments</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>      </span><span class="annot"><a href="IOH.html#storeComment"><span class="hs-identifier">storeComment</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>      </span><span class="annot"><a href="IOH.html#deleteComment"><span class="hs-identifier">deleteComment</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>      </span><span class="annot"><a href="IOH.html#IOHError"><span class="hs-identifier">IOHError</span></a></span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHInsertError"><span class="hs-identifier">IOHInsertError</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="IOH.html#IOHFetchError"><span class="hs-identifier">IOHFetchError</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ApiTypes.html"><span class="hs-identifier">ApiTypes</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier">Comment</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span class="hs-special">(</span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span class="hs-comment">----</span><span>
+</span><span id="line-33"></span><span>
+</span><span id="line-34"></span><span class="hs-comment">-- | Handler for fetching comments for a bugId</span><span>
+</span><span id="line-35"></span><span class="annot"><a href="CommentApi.html#getCommentsHandler"><span class="hs-identifier hs-type">getCommentsHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="hs-comment">-- ^ the bugId to fetch comments for</span><span>
+</span><span id="line-36"></span><span>                   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier hs-type">ApiTypes.Comment</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-37"></span><span id="getCommentsHandler"><span class="annot"><span class="annottext">getCommentsHandler :: Int64 -&gt; Handler [Comment]
+</span><a href="CommentApi.html#getCommentsHandler"><span class="hs-identifier hs-var hs-var">getCommentsHandler</span></a></span></span><span> </span><span id="local-6989586621679353396"><span class="annot"><span class="annottext">bugId :: Int64
+</span><a href="#local-6989586621679353396"><span class="hs-identifier hs-var">bugId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-38"></span><span>    </span><span id="local-6989586621679353395"><span class="annot"><span class="annottext">Either IOHError [Comment]
+</span><a href="#local-6989586621679353395"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either IOHError [Comment])
+-&gt; Handler (Either IOHError [Comment])
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOHError [Comment])
+ -&gt; Handler (Either IOHError [Comment]))
+-&gt; IO (Either IOHError [Comment])
+-&gt; Handler (Either IOHError [Comment])
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; IO (Either IOHError [Comment])
+</span><a href="IOH.html#getComments"><span class="hs-identifier hs-var">IOH.getComments</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353396"><span class="hs-identifier hs-var">bugId</span></a></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either IOHError [Comment]
+</span><a href="#local-6989586621679353395"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-40"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353394"><span class="annot"><span class="annottext">cms :: [Comment]
+</span><a href="#local-6989586621679353394"><span class="hs-identifier hs-var">cms</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">[Comment] -&gt; Handler [Comment]
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">[Comment]
+</span><a href="#local-6989586621679353394"><span class="hs-identifier hs-var">cms</span></a></span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHFetchError"><span class="hs-identifier hs-type">IOHFetchError</span></a></span><span> </span><span id="local-6989586621679353393"><span class="annot"><span class="annottext">m :: String
+</span><a href="#local-6989586621679353393"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler [Comment]
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err400</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353393"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-42"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-identifier">_</span><span>    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler [Comment]
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err500</span></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- | Handler for getting comments submitted by a specific userId</span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- @todo implement</span><span>
+</span><span id="line-46"></span><span class="annot"><a href="CommentApi.html#getCommentsByUserHandler"><span class="hs-identifier hs-type">getCommentsByUserHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="hs-comment">-- ^ unique userId to fetch comments submitted by</span><span>
+</span><span id="line-47"></span><span>                         </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier hs-type">ApiTypes.Comment</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-48"></span><span id="getCommentsByUserHandler"><span class="annot"><span class="annottext">getCommentsByUserHandler :: Int64 -&gt; Handler [Comment]
+</span><a href="CommentApi.html#getCommentsByUserHandler"><span class="hs-identifier hs-var hs-var">getCommentsByUserHandler</span></a></span></span><span> </span><span id="local-6989586621679353392"><span class="annot"><span class="annottext">uId :: Int64
+</span><a href="#local-6989586621679353392"><span class="hs-identifier hs-var">uId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Handler [Comment]
+forall a. HasCallStack =&gt; a
+</span><span class="hs-identifier hs-var">undefined</span></span><span>
+</span><span id="line-49"></span><span>
+</span><span id="line-50"></span><span class="hs-comment">-- | (Init+ Only) Handler for submitting a new Comment</span><span>
+</span><span id="line-51"></span><span class="annot"><a href="CommentApi.html#postCommentHandler"><span class="hs-identifier hs-type">postCommentHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-comment">-- ^ the requesting user</span><span>
+</span><span id="line-52"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="ApiTypes.html#Comment"><span class="hs-identifier hs-type">ApiTypes.Comment</span></a></span><span> </span><span class="hs-comment">-- ^ the comment data to insert</span><span>
+</span><span id="line-53"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-54"></span><span id="postCommentHandler"><span class="annot"><span class="annottext">postCommentHandler :: AuthenticatedUser -&gt; Comment -&gt; Handler ResponseMessage
+</span><a href="CommentApi.html#postCommentHandler"><span class="hs-identifier hs-var hs-var">postCommentHandler</span></a></span></span><span> </span><span id="local-6989586621679353390"><span class="annot"><span class="annottext">au :: AuthenticatedUser
+</span><a href="#local-6989586621679353390"><span class="hs-identifier hs-var">au</span></a></span></span><span> </span><span id="local-6989586621679353389"><span class="annot"><span class="annottext">cm :: Comment
+</span><a href="#local-6989586621679353389"><span class="hs-identifier hs-var">cm</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-55"></span><span>  </span><span class="annot"><span class="annottext">Bool -&gt; Handler () -&gt; Handler ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">unless</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Bool
+</span><a href="AuthTypes.html#isUserInit"><span class="hs-identifier hs-var">isUserInit</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353390"><span class="hs-identifier hs-var">au</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-56"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ServerError -&gt; Handler ()
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err401</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-string">&quot;User must be Initiate role or higher&quot;</span></span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span>  </span><span id="local-6989586621679353388"><span class="annot"><span class="annottext">Either IOHError Int64
+</span><a href="#local-6989586621679353388"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64))
+-&gt; IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Comment -&gt; IO (Either IOHError Int64)
+</span><a href="IOH.html#storeComment"><span class="hs-identifier hs-var">IOH.storeComment</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353390"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="annot"><span class="annottext">Comment
+</span><a href="#local-6989586621679353389"><span class="hs-identifier hs-var">cm</span></a></span><span>
+</span><span id="line-58"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either IOHError Int64
+</span><a href="#local-6989586621679353388"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-59"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353387"><span class="annot"><span class="annottext">id :: Int64
+</span><a href="#local-6989586621679353387"><span class="hs-identifier hs-var">id</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">ResponseMessage -&gt; Handler ResponseMessage
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(ResponseMessage -&gt; Handler ResponseMessage)
+-&gt; ResponseMessage -&gt; Handler ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String -&gt; ResponseMessage
+</span><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-var">ResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">200</span></span><span> </span><span class="annot"><span class="hs-string">&quot;OK&quot;</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; ResponseMessage) -&gt; String -&gt; ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Inserted comment with ID &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353387"><span class="hs-identifier hs-var">id</span></a></span><span>
+</span><span id="line-61"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHInsertError"><span class="hs-identifier hs-type">IOHInsertError</span></a></span><span> </span><span id="local-6989586621679353385"><span class="annot"><span class="annottext">m :: String
+</span><a href="#local-6989586621679353385"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler ResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err400</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353385"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-62"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-identifier">_</span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler ResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err500</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-string">&quot;Failed to insert comment&quot;</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-63"></span><span>
+</span><span id="line-64"></span><span>
+</span><span id="line-65"></span><span class="hs-comment">-- | (Init+ Only) Handler for deleting a single Comment</span><span>
+</span><span id="line-66"></span><span class="annot"><a href="CommentApi.html#deleteCommentHandler"><span class="hs-identifier hs-type">deleteCommentHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-comment">-- ^ the requesting user</span><span>
+</span><span id="line-67"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="hs-comment">-- ^ the id of the comment to delete</span><span>
+</span><span id="line-68"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-69"></span><span id="deleteCommentHandler"><span class="annot"><span class="annottext">deleteCommentHandler :: AuthenticatedUser -&gt; Int64 -&gt; Handler ResponseMessage
+</span><a href="CommentApi.html#deleteCommentHandler"><span class="hs-identifier hs-var hs-var">deleteCommentHandler</span></a></span></span><span> </span><span id="local-6989586621679353384"><span class="annot"><span class="annottext">au :: AuthenticatedUser
+</span><a href="#local-6989586621679353384"><span class="hs-identifier hs-var">au</span></a></span></span><span> </span><span id="local-6989586621679353383"><span class="annot"><span class="annottext">cId :: Int64
+</span><a href="#local-6989586621679353383"><span class="hs-identifier hs-var">cId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-70"></span><span>  </span><span class="annot"><span class="annottext">Bool -&gt; Handler () -&gt; Handler ()
+forall (f :: * -&gt; *). Applicative f =&gt; Bool -&gt; f () -&gt; f ()
+</span><span class="hs-identifier hs-var">unless</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Bool
+</span><a href="AuthTypes.html#isUserInit"><span class="hs-identifier hs-var">isUserInit</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353384"><span class="hs-identifier hs-var">au</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-71"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ServerError -&gt; Handler ()
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err401</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-string">&quot;User must be Initiate role or higher&quot;</span></span><span> </span><span class="hs-special">}</span><span class="hs-special">)</span><span>
+</span><span id="line-72"></span><span>  </span><span id="local-6989586621679353382"><span class="annot"><span class="annottext">Either IOHError Bool
+</span><a href="#local-6989586621679353382"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either IOHError Bool) -&gt; Handler (Either IOHError Bool)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOHError Bool) -&gt; Handler (Either IOHError Bool))
+-&gt; IO (Either IOHError Bool) -&gt; Handler (Either IOHError Bool)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int64 -&gt; IO (Either IOHError Bool)
+</span><a href="IOH.html#deleteComment"><span class="hs-identifier hs-var">IOH.deleteComment</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353384"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353383"><span class="hs-identifier hs-var">cId</span></a></span><span>
+</span><span id="line-73"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either IOHError Bool
+</span><a href="#local-6989586621679353382"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-74"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353381"><span class="annot"><span class="annottext">id :: Bool
+</span><a href="#local-6989586621679353381"><span class="hs-identifier hs-var">id</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-75"></span><span>      </span><span class="annot"><span class="annottext">ResponseMessage -&gt; Handler ResponseMessage
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(ResponseMessage -&gt; Handler ResponseMessage)
+-&gt; ResponseMessage -&gt; Handler ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String -&gt; ResponseMessage
+</span><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-var">ResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">200</span></span><span> </span><span class="annot"><span class="hs-string">&quot;OK&quot;</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; ResponseMessage) -&gt; String -&gt; ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Deleted comment with ID &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353383"><span class="hs-identifier hs-var">cId</span></a></span><span>
+</span><span id="line-76"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHInsertError"><span class="hs-identifier hs-type">IOHInsertError</span></a></span><span> </span><span id="local-6989586621679353380"><span class="annot"><span class="annottext">m :: String
+</span><a href="#local-6989586621679353380"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler ResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err400</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353380"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-77"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-identifier">_</span><span>   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler ResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err500</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-string">&quot;Failed to delete comment&quot;</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-78"></span></pre></body></html>

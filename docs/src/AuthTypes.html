@@ -1,0 +1,311 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE DataKinds       #-}</span><span>
+</span><span id="line-2"></span><span class="hs-pragma">{-# LANGUAGE TemplateHaskell #-}</span><span>
+</span><span id="line-3"></span><span class="hs-pragma">{-# LANGUAGE TypeOperators   #-}</span><span>
+</span><span id="line-4"></span><span class="hs-pragma">{-# LANGUAGE DeriveGeneric   #-}</span><span>
+</span><span id="line-5"></span><span>
+</span><span id="line-6"></span><span class="hs-comment">-- | Types used specifically for Authentication and User management</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AuthTypes</span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">(</span><span>
+</span><span id="line-9"></span><span>      </span><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier">User</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-10"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserL"><span class="hs-identifier">UserL</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-11"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier">UserP</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-12"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier">UserRegistration</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserLoginData"><span class="hs-identifier">UserLoginData</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>      </span><span class="annot"><a href="AuthTypes.html#AuthResultT"><span class="hs-identifier">AuthResultT</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserChangeRoleData"><span class="hs-identifier">UserChangeRoleData</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>      </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier">AuthenticatedUser</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>      </span><span class="annot"><a href="AuthTypes.html#isUserMod"><span class="hs-identifier">isUserMod</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><a href="AuthTypes.html#isUserAdmin"><span class="hs-identifier">isUserAdmin</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>      </span><span class="annot"><a href="AuthTypes.html#userModRole"><span class="hs-identifier">userModRole</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>      </span><span class="annot"><a href="AuthTypes.html#userAdminRole"><span class="hs-identifier">userAdminRole</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>      </span><span class="annot"><a href="AuthTypes.html#isUserInit"><span class="hs-identifier">isUserInit</span></a></span><span>
+</span><span id="line-22"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">---</span><span>
+</span><span id="line-25"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">FromJSON</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">ToJSON</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">defaultOptions</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson.TH</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">defaultOptions</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">deriveJSON</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-27"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Int</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Int64</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.UUID</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">UUID</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-29"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant.Auth.Server</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">FromJWT</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">ToJWT</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">GHC.Generics</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Generic</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-31"></span><span class="hs-comment">---</span><span>
+</span><span id="line-32"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ApiTypes.html"><span class="hs-identifier">ApiTypes</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier">Bug</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-33"></span><span class="hs-comment">---</span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- | Represents a single User</span><span>
+</span><span id="line-36"></span><span class="hs-keyword">data</span><span> </span><span id="User"><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier hs-var">User</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="User"><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier hs-var">User</span></a></span></span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="userId"><span class="annot"><span class="annottext">User -&gt; Int64
+</span><a href="AuthTypes.html#userId"><span class="hs-identifier hs-var hs-var">userId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-38"></span><span>    </span><span id="userCreatedTime"><span class="annot"><span class="annottext">User -&gt; Maybe String
+</span><a href="AuthTypes.html#userCreatedTime"><span class="hs-identifier hs-var hs-var">userCreatedTime</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-39"></span><span>    </span><span id="userLastLogin"><span class="annot"><span class="annottext">User -&gt; Maybe String
+</span><a href="AuthTypes.html#userLastLogin"><span class="hs-identifier hs-var hs-var">userLastLogin</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>    </span><span id="userUuid"><span class="annot"><span class="annottext">User -&gt; UUID
+</span><a href="AuthTypes.html#userUuid"><span class="hs-identifier hs-var hs-var">userUuid</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">UUID</span></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>    </span><span id="userHash"><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="AuthTypes.html#userHash"><span class="hs-identifier hs-var hs-var">userHash</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span id="userSalt"><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="AuthTypes.html#userSalt"><span class="hs-identifier hs-var hs-var">userSalt</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>    </span><span id="userName"><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="AuthTypes.html#userName"><span class="hs-identifier hs-var hs-var">userName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>    </span><span id="userRole"><span class="annot"><span class="annottext">User -&gt; Int
+</span><a href="AuthTypes.html#userRole"><span class="hs-identifier hs-var hs-var">userRole</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>    </span><span id="userAvatar"><span class="annot"><span class="annottext">User -&gt; Int
+</span><a href="AuthTypes.html#userAvatar"><span class="hs-identifier hs-var hs-var">userAvatar</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-46"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352323"><span id="local-6989586621679352325"><span id="local-6989586621679352327"><span class="annot"><span class="annottext">Int -&gt; User -&gt; ShowS
+[User] -&gt; ShowS
+User -&gt; String
+(Int -&gt; User -&gt; ShowS)
+-&gt; (User -&gt; String) -&gt; ([User] -&gt; ShowS) -&gt; Show User
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [User] -&gt; ShowS
+$cshowList :: [User] -&gt; ShowS
+show :: User -&gt; String
+$cshow :: User -&gt; String
+showsPrec :: Int -&gt; User -&gt; ShowS
+$cshowsPrec :: Int -&gt; User -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-47"></span><span>
+</span><span id="line-48"></span><span class="hs-comment">-- | Subset of User properties used in User Listings</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">data</span><span> </span><span id="UserL"><span class="annot"><a href="AuthTypes.html#UserL"><span class="hs-identifier hs-var">UserL</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UserL"><span class="annot"><a href="AuthTypes.html#UserL"><span class="hs-identifier hs-var">UserL</span></a></span></span><span>
+</span><span id="line-50"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="userLId"><span class="annot"><span class="annottext">UserL -&gt; Int64
+</span><a href="AuthTypes.html#userLId"><span class="hs-identifier hs-var hs-var">userLId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-51"></span><span>    </span><span id="userLName"><span class="annot"><span class="annottext">UserL -&gt; String
+</span><a href="AuthTypes.html#userLName"><span class="hs-identifier hs-var hs-var">userLName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-52"></span><span>    </span><span id="userLRole"><span class="annot"><span class="annottext">UserL -&gt; Int
+</span><a href="AuthTypes.html#userLRole"><span class="hs-identifier hs-var hs-var">userLRole</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-53"></span><span>    </span><span id="userLCreatedTime"><span class="annot"><span class="annottext">UserL -&gt; String
+</span><a href="AuthTypes.html#userLCreatedTime"><span class="hs-identifier hs-var hs-var">userLCreatedTime</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-54"></span><span>    </span><span id="userLLastLogin"><span class="annot"><span class="annottext">UserL -&gt; Maybe String
+</span><a href="AuthTypes.html#userLLastLogin"><span class="hs-identifier hs-var hs-var">userLLastLogin</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-55"></span><span>    </span><span id="userLAvatar"><span class="annot"><span class="annottext">UserL -&gt; Int
+</span><a href="AuthTypes.html#userLAvatar"><span class="hs-identifier hs-var hs-var">userLAvatar</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-56"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352309"><span id="local-6989586621679352311"><span id="local-6989586621679352313"><span class="annot"><span class="annottext">Int -&gt; UserL -&gt; ShowS
+[UserL] -&gt; ShowS
+UserL -&gt; String
+(Int -&gt; UserL -&gt; ShowS)
+-&gt; (UserL -&gt; String) -&gt; ([UserL] -&gt; ShowS) -&gt; Show UserL
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [UserL] -&gt; ShowS
+$cshowList :: [UserL] -&gt; ShowS
+show :: UserL -&gt; String
+$cshow :: UserL -&gt; String
+showsPrec :: Int -&gt; UserL -&gt; ShowS
+$cshowsPrec :: Int -&gt; UserL -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-57"></span><span class="hs-special">$(</span><span id="local-6989586621679352297"><span id="local-6989586621679352299"><span id="local-6989586621679352301"><span id="local-6989586621679352303"><span id="local-6989586621679352305"><span id="local-6989586621679352307"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">UserL</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span><span class="hs-comment">-- | Subset of User properties used in User Profiles</span><span>
+</span><span id="line-60"></span><span class="hs-keyword">data</span><span> </span><span id="UserP"><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier hs-var">UserP</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UserP"><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier hs-var">UserP</span></a></span></span><span>
+</span><span id="line-61"></span><span>  </span><span class="hs-special">{</span><span> </span><span id="userPId"><span class="annot"><span class="annottext">UserP -&gt; Int64
+</span><a href="AuthTypes.html#userPId"><span class="hs-identifier hs-var hs-var">userPId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-62"></span><span>    </span><span id="userPName"><span class="annot"><span class="annottext">UserP -&gt; String
+</span><a href="AuthTypes.html#userPName"><span class="hs-identifier hs-var hs-var">userPName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-63"></span><span>    </span><span id="userPRole"><span class="annot"><span class="annottext">UserP -&gt; Int
+</span><a href="AuthTypes.html#userPRole"><span class="hs-identifier hs-var hs-var">userPRole</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-64"></span><span>    </span><span id="userPCreatedTime"><span class="annot"><span class="annottext">UserP -&gt; String
+</span><a href="AuthTypes.html#userPCreatedTime"><span class="hs-identifier hs-var hs-var">userPCreatedTime</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-65"></span><span>    </span><span id="userPLastLogin"><span class="annot"><span class="annottext">UserP -&gt; Maybe String
+</span><a href="AuthTypes.html#userPLastLogin"><span class="hs-identifier hs-var hs-var">userPLastLogin</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-66"></span><span>    </span><span id="userPAvatar"><span class="annot"><span class="annottext">UserP -&gt; Int
+</span><a href="AuthTypes.html#userPAvatar"><span class="hs-identifier hs-var hs-var">userPAvatar</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-67"></span><span>    </span><span id="userPBugs"><span class="annot"><span class="annottext">UserP -&gt; [Bug]
+</span><a href="AuthTypes.html#userPBugs"><span class="hs-identifier hs-var hs-var">userPBugs</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#Bug"><span class="hs-identifier hs-type">ApiTypes.Bug</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-68"></span><span>  </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352278"><span id="local-6989586621679352280"><span id="local-6989586621679352282"><span class="annot"><span class="annottext">Int -&gt; UserP -&gt; ShowS
+[UserP] -&gt; ShowS
+UserP -&gt; String
+(Int -&gt; UserP -&gt; ShowS)
+-&gt; (UserP -&gt; String) -&gt; ([UserP] -&gt; ShowS) -&gt; Show UserP
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [UserP] -&gt; ShowS
+$cshowList :: [UserP] -&gt; ShowS
+show :: UserP -&gt; String
+$cshow :: UserP -&gt; String
+showsPrec :: Int -&gt; UserP -&gt; ShowS
+$cshowsPrec :: Int -&gt; UserP -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span class="hs-special">$(</span><span id="local-6989586621679352266"><span id="local-6989586621679352268"><span id="local-6989586621679352270"><span id="local-6989586621679352272"><span id="local-6989586621679352274"><span id="local-6989586621679352276"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">UserP</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-70"></span><span>
+</span><span id="line-71"></span><span class="hs-comment">-- | Submitted when attempting to create a new User</span><span>
+</span><span id="line-72"></span><span class="hs-keyword">data</span><span> </span><span id="UserRegistration"><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier hs-var">UserRegistration</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UserRegistration"><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier hs-var">UserRegistration</span></a></span></span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="userRegName"><span class="annot"><span class="annottext">UserRegistration -&gt; String
+</span><a href="AuthTypes.html#userRegName"><span class="hs-identifier hs-var hs-var">userRegName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-74"></span><span>      </span><span id="userRegEmail"><span class="annot"><span class="annottext">UserRegistration -&gt; String
+</span><a href="AuthTypes.html#userRegEmail"><span class="hs-identifier hs-var hs-var">userRegEmail</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-75"></span><span>      </span><span id="userRegPass"><span class="annot"><span class="annottext">UserRegistration -&gt; String
+</span><a href="AuthTypes.html#userRegPass"><span class="hs-identifier hs-var hs-var">userRegPass</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-76"></span><span>      </span><span id="userRegAvatar"><span class="annot"><span class="annottext">UserRegistration -&gt; Int
+</span><a href="AuthTypes.html#userRegAvatar"><span class="hs-identifier hs-var hs-var">userRegAvatar</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352255"><span id="local-6989586621679352257"><span id="local-6989586621679352259"><span class="annot"><span class="annottext">Int -&gt; UserRegistration -&gt; ShowS
+[UserRegistration] -&gt; ShowS
+UserRegistration -&gt; String
+(Int -&gt; UserRegistration -&gt; ShowS)
+-&gt; (UserRegistration -&gt; String)
+-&gt; ([UserRegistration] -&gt; ShowS)
+-&gt; Show UserRegistration
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [UserRegistration] -&gt; ShowS
+$cshowList :: [UserRegistration] -&gt; ShowS
+show :: UserRegistration -&gt; String
+$cshow :: UserRegistration -&gt; String
+showsPrec :: Int -&gt; UserRegistration -&gt; ShowS
+$cshowsPrec :: Int -&gt; UserRegistration -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-78"></span><span class="hs-special">$(</span><span id="local-6989586621679352243"><span id="local-6989586621679352245"><span id="local-6989586621679352247"><span id="local-6989586621679352249"><span id="local-6989586621679352251"><span id="local-6989586621679352253"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">UserRegistration</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-79"></span><span>
+</span><span id="line-80"></span><span class="hs-comment">-- | Submitted when attempting to authenticate</span><span>
+</span><span id="line-81"></span><span class="hs-keyword">data</span><span> </span><span id="UserLoginData"><span class="annot"><a href="AuthTypes.html#UserLoginData"><span class="hs-identifier hs-var">UserLoginData</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UserLoginData"><span class="annot"><a href="AuthTypes.html#UserLoginData"><span class="hs-identifier hs-var">UserLoginData</span></a></span></span><span>
+</span><span id="line-82"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="uldName"><span class="annot"><span class="annottext">UserLoginData -&gt; String
+</span><a href="AuthTypes.html#uldName"><span class="hs-identifier hs-var hs-var">uldName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-83"></span><span>      </span><span id="uldPass"><span class="annot"><span class="annottext">UserLoginData -&gt; String
+</span><a href="AuthTypes.html#uldPass"><span class="hs-identifier hs-var hs-var">uldPass</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-84"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352234"><span id="local-6989586621679352236"><span id="local-6989586621679352238"><span class="annot"><span class="annottext">Int -&gt; UserLoginData -&gt; ShowS
+[UserLoginData] -&gt; ShowS
+UserLoginData -&gt; String
+(Int -&gt; UserLoginData -&gt; ShowS)
+-&gt; (UserLoginData -&gt; String)
+-&gt; ([UserLoginData] -&gt; ShowS)
+-&gt; Show UserLoginData
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [UserLoginData] -&gt; ShowS
+$cshowList :: [UserLoginData] -&gt; ShowS
+show :: UserLoginData -&gt; String
+$cshow :: UserLoginData -&gt; String
+showsPrec :: Int -&gt; UserLoginData -&gt; ShowS
+$cshowsPrec :: Int -&gt; UserLoginData -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-85"></span><span class="hs-special">$(</span><span id="local-6989586621679352222"><span id="local-6989586621679352224"><span id="local-6989586621679352226"><span id="local-6989586621679352228"><span id="local-6989586621679352230"><span id="local-6989586621679352232"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">UserLoginData</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-86"></span><span>
+</span><span id="line-87"></span><span class="hs-comment">-- | Payload for changing a user role (mod only)</span><span>
+</span><span id="line-88"></span><span class="hs-keyword">data</span><span> </span><span id="UserChangeRoleData"><span class="annot"><a href="AuthTypes.html#UserChangeRoleData"><span class="hs-identifier hs-var">UserChangeRoleData</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="UserChangeRoleData"><span class="annot"><a href="AuthTypes.html#UserChangeRoleData"><span class="hs-identifier hs-var">UserChangeRoleData</span></a></span></span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="ucrId"><span class="annot"><span class="annottext">UserChangeRoleData -&gt; Int64
+</span><a href="AuthTypes.html#ucrId"><span class="hs-identifier hs-var hs-var">ucrId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-90"></span><span>      </span><span id="ucrRole"><span class="annot"><span class="annottext">UserChangeRoleData -&gt; Int
+</span><a href="AuthTypes.html#ucrRole"><span class="hs-identifier hs-var hs-var">ucrRole</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-91"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352213"><span id="local-6989586621679352215"><span id="local-6989586621679352217"><span class="annot"><span class="annottext">Int -&gt; UserChangeRoleData -&gt; ShowS
+[UserChangeRoleData] -&gt; ShowS
+UserChangeRoleData -&gt; String
+(Int -&gt; UserChangeRoleData -&gt; ShowS)
+-&gt; (UserChangeRoleData -&gt; String)
+-&gt; ([UserChangeRoleData] -&gt; ShowS)
+-&gt; Show UserChangeRoleData
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [UserChangeRoleData] -&gt; ShowS
+$cshowList :: [UserChangeRoleData] -&gt; ShowS
+show :: UserChangeRoleData -&gt; String
+$cshow :: UserChangeRoleData -&gt; String
+showsPrec :: Int -&gt; UserChangeRoleData -&gt; ShowS
+$cshowsPrec :: Int -&gt; UserChangeRoleData -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-92"></span><span class="hs-special">$(</span><span id="local-6989586621679352201"><span id="local-6989586621679352203"><span id="local-6989586621679352205"><span id="local-6989586621679352207"><span id="local-6989586621679352209"><span id="local-6989586621679352211"><span class="hs-identifier">deriveJSON</span><span> </span><span class="hs-identifier">defaultOptions</span><span> </span><span class="hs-special">''</span><span class="hs-identifier">UserChangeRoleData</span></span></span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-93"></span><span>
+</span><span id="line-94"></span><span class="hs-comment">-- | Primary auth type, encoded in Bearer tokens in API calls</span><span>
+</span><span id="line-95"></span><span id="local-6989586621679352199"><span id="local-6989586621679352200"></span></span><span class="hs-keyword">data</span><span> </span><span id="AuthenticatedUser"><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-var">AuthenticatedUser</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="AUser"><span class="annot"><a href="AuthTypes.html#AUser"><span class="hs-identifier hs-var">AUser</span></a></span></span><span>
+</span><span id="line-96"></span><span>    </span><span class="hs-special">{</span><span> </span><span id="auId"><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int64
+</span><a href="AuthTypes.html#auId"><span class="hs-identifier hs-var hs-var">auId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span class="hs-special">,</span><span>
+</span><span id="line-97"></span><span>      </span><span id="auRole"><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int
+</span><a href="AuthTypes.html#auRole"><span class="hs-identifier hs-var hs-var">auRole</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-98"></span><span>      </span><span id="auName"><span class="annot"><span class="annottext">AuthenticatedUser -&gt; String
+</span><a href="AuthTypes.html#auName"><span class="hs-identifier hs-var hs-var">auName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-99"></span><span>      </span><span id="auSecret"><span class="annot"><span class="annottext">AuthenticatedUser -&gt; String
+</span><a href="AuthTypes.html#auSecret"><span class="hs-identifier hs-var hs-var">auSecret</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-100"></span><span>    </span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352188"><span id="local-6989586621679352190"><span id="local-6989586621679352192"><span class="annot"><span class="annottext">Int -&gt; AuthenticatedUser -&gt; ShowS
+[AuthenticatedUser] -&gt; ShowS
+AuthenticatedUser -&gt; String
+(Int -&gt; AuthenticatedUser -&gt; ShowS)
+-&gt; (AuthenticatedUser -&gt; String)
+-&gt; ([AuthenticatedUser] -&gt; ShowS)
+-&gt; Show AuthenticatedUser
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [AuthenticatedUser] -&gt; ShowS
+$cshowList :: [AuthenticatedUser] -&gt; ShowS
+show :: AuthenticatedUser -&gt; String
+$cshow :: AuthenticatedUser -&gt; String
+showsPrec :: Int -&gt; AuthenticatedUser -&gt; ShowS
+$cshowsPrec :: Int -&gt; AuthenticatedUser -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">(forall x. AuthenticatedUser -&gt; Rep AuthenticatedUser x)
+-&gt; (forall x. Rep AuthenticatedUser x -&gt; AuthenticatedUser)
+-&gt; Generic AuthenticatedUser
+forall x. Rep AuthenticatedUser x -&gt; AuthenticatedUser
+forall x. AuthenticatedUser -&gt; Rep AuthenticatedUser x
+forall a.
+(forall x. a -&gt; Rep a x) -&gt; (forall x. Rep a x -&gt; a) -&gt; Generic a
+$cto :: forall x. Rep AuthenticatedUser x -&gt; AuthenticatedUser
+$cfrom :: forall x. AuthenticatedUser -&gt; Rep AuthenticatedUser x
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">Generic</span></span><span class="hs-special">)</span><span>
+</span><span id="line-101"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679352177"><span id="local-6989586621679352179"><span id="local-6989586621679352181"><span id="local-6989586621679352183"><span class="annot"><span class="hs-identifier hs-type">ToJSON</span></span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span></span></span></span></span><span>
+</span><span id="line-102"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679352173"><span id="local-6989586621679352175"><span class="annot"><span class="hs-identifier hs-type">FromJSON</span></span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span></span></span><span>
+</span><span id="line-103"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679352171"><span class="annot"><span class="hs-identifier hs-type">ToJWT</span></span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span></span><span>
+</span><span id="line-104"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679352168"><span class="annot"><span class="hs-identifier hs-type">FromJWT</span></span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span></span><span>
+</span><span id="line-105"></span><span>
+</span><span id="line-106"></span><span class="hs-comment">-- | Returned from the AuthHandler's tryAuthenticate function</span><span>
+</span><span id="line-107"></span><span class="hs-keyword">data</span><span> </span><span id="AuthResultT"><span class="annot"><a href="AuthTypes.html#AuthResultT"><span class="hs-identifier hs-var">AuthResultT</span></a></span></span><span>
+</span><span id="line-108"></span><span>    </span><span class="hs-glyph">=</span><span> </span><span id="AuthOK"><span class="annot"><a href="AuthTypes.html#AuthOK"><span class="hs-identifier hs-var">AuthOK</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span>
+</span><span id="line-109"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AuthFailed"><span class="annot"><a href="AuthTypes.html#AuthFailed"><span class="hs-identifier hs-var">AuthFailed</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-110"></span><span>    </span><span class="hs-glyph">|</span><span> </span><span id="AuthError"><span class="annot"><a href="AuthTypes.html#AuthError"><span class="hs-identifier hs-var">AuthError</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-111"></span><span>    </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352158"><span id="local-6989586621679352160"><span id="local-6989586621679352162"><span class="annot"><span class="annottext">Int -&gt; AuthResultT -&gt; ShowS
+[AuthResultT] -&gt; ShowS
+AuthResultT -&gt; String
+(Int -&gt; AuthResultT -&gt; ShowS)
+-&gt; (AuthResultT -&gt; String)
+-&gt; ([AuthResultT] -&gt; ShowS)
+-&gt; Show AuthResultT
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [AuthResultT] -&gt; ShowS
+$cshowList :: [AuthResultT] -&gt; ShowS
+show :: AuthResultT -&gt; String
+$cshow :: AuthResultT -&gt; String
+showsPrec :: Int -&gt; AuthResultT -&gt; ShowS
+$cshowsPrec :: Int -&gt; AuthResultT -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-112"></span><span>
+</span><span id="line-113"></span><span class="hs-comment">-- | The minimum role of a moderator</span><span>
+</span><span id="line-114"></span><span class="annot"><a href="AuthTypes.html#userModRole"><span class="hs-identifier hs-type">userModRole</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-115"></span><span id="userModRole"><span class="annot"><span class="annottext">userModRole :: Int
+</span><a href="AuthTypes.html#userModRole"><span class="hs-identifier hs-var hs-var">userModRole</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-number">3</span></span><span>
+</span><span id="line-116"></span><span>
+</span><span id="line-117"></span><span class="hs-comment">-- | The minimum role of an admin</span><span>
+</span><span id="line-118"></span><span class="annot"><a href="AuthTypes.html#userAdminRole"><span class="hs-identifier hs-type">userAdminRole</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-119"></span><span id="userAdminRole"><span class="annot"><span class="annottext">userAdminRole :: Int
+</span><a href="AuthTypes.html#userAdminRole"><span class="hs-identifier hs-var hs-var">userAdminRole</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-number">5</span></span><span>
+</span><span id="line-120"></span><span>
+</span><span id="line-121"></span><span class="hs-comment">-- | Checks if a user is at least initiated</span><span>
+</span><span id="line-122"></span><span class="annot"><a href="AuthTypes.html#isUserInit"><span class="hs-identifier hs-type">isUserInit</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-123"></span><span id="isUserInit"><span class="annot"><span class="annottext">isUserInit :: AuthenticatedUser -&gt; Bool
+</span><a href="AuthTypes.html#isUserInit"><span class="hs-identifier hs-var hs-var">isUserInit</span></a></span></span><span> </span><span id="local-6989586621679352157"><span class="annot"><span class="annottext">au :: AuthenticatedUser
+</span><a href="#local-6989586621679352157"><span class="hs-identifier hs-var">au</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int
+</span><a href="AuthTypes.html#auRole"><span class="hs-identifier hs-var hs-var">auRole</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679352157"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="hs-number">2</span></span><span>
+</span><span id="line-124"></span><span>
+</span><span id="line-125"></span><span class="hs-comment">-- | Checks if a user is at least moderator</span><span>
+</span><span id="line-126"></span><span class="annot"><a href="AuthTypes.html#isUserMod"><span class="hs-identifier hs-type">isUserMod</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-127"></span><span id="isUserMod"><span class="annot"><span class="annottext">isUserMod :: AuthenticatedUser -&gt; Bool
+</span><a href="AuthTypes.html#isUserMod"><span class="hs-identifier hs-var hs-var">isUserMod</span></a></span></span><span> </span><span id="local-6989586621679352156"><span class="annot"><span class="annottext">au :: AuthenticatedUser
+</span><a href="#local-6989586621679352156"><span class="hs-identifier hs-var">au</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int
+</span><a href="AuthTypes.html#auRole"><span class="hs-identifier hs-var hs-var">auRole</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679352156"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="AuthTypes.html#userModRole"><span class="hs-identifier hs-var">userModRole</span></a></span><span>
+</span><span id="line-128"></span><span>
+</span><span id="line-129"></span><span class="hs-comment">-- | Checks if a user is at least administrator</span><span>
+</span><span id="line-130"></span><span class="annot"><a href="AuthTypes.html#isUserAdmin"><span class="hs-identifier hs-type">isUserAdmin</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span>
+</span><span id="line-131"></span><span id="isUserAdmin"><span class="annot"><span class="annottext">isUserAdmin :: AuthenticatedUser -&gt; Bool
+</span><a href="AuthTypes.html#isUserAdmin"><span class="hs-identifier hs-var hs-var">isUserAdmin</span></a></span></span><span> </span><span id="local-6989586621679352155"><span class="annot"><span class="annottext">au :: AuthenticatedUser
+</span><a href="#local-6989586621679352155"><span class="hs-identifier hs-var">au</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int
+</span><a href="AuthTypes.html#auRole"><span class="hs-identifier hs-var hs-var">auRole</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679352155"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;=</span></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="AuthTypes.html#userAdminRole"><span class="hs-identifier hs-var">userAdminRole</span></a></span><span>
+</span><span id="line-132"></span></pre></body></html>

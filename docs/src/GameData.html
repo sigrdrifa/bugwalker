@@ -1,0 +1,133 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | The main gamedata module which exports functions</span><span>
+</span><span id="line-4"></span><span class="hs-comment">--   for running a full update of the gamedata by fetching data from</span><span>
+</span><span id="line-5"></span><span class="hs-comment">--   Github, parsing it and inserting it to a given db  </span><span>
+</span><span id="line-6"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">GameData</span><span>
+</span><span id="line-7"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="GameData.html#runGameDataUpdate"><span class="hs-identifier">runGameDataUpdate</span></a></span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GameDataTypes.html"><span class="hs-identifier">GameDataTypes</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier">SpellData</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Fetch.html"><span class="hs-identifier">Fetch</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Fetch.html#fetchSpells"><span class="hs-identifier">fetchSpells</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Fetch.html#fetchSpellsLocal"><span class="hs-identifier">fetchSpellsLocal</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Parser.html"><span class="hs-identifier">Parser</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Parser.html#parseSpellData"><span class="hs-identifier">parseSpellData</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="IOH.html"><span class="hs-identifier">IOH</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="IOH.html#initIO"><span class="hs-identifier">initIO</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="IOH.html#storeSpellData"><span class="hs-identifier">storeSpellData</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | Attempts to fetch a spelldata dumpfile using the F</span><span>
+</span><span id="line-16"></span><span class="hs-comment">-- Fetch module and calls on the Parser module to construct</span><span>
+</span><span id="line-17"></span><span class="hs-comment">-- a SpellData object representing the fetched data.</span><span>
+</span><span id="line-18"></span><span class="annot"><a href="GameData.html#buildSpellData"><span class="hs-identifier hs-type">buildSpellData</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-comment">-- ^ whether or not to fetch from a local file or via HTTP</span><span>
+</span><span id="line-19"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ if useLocal is True then use this path</span><span>
+</span><span id="line-20"></span><span>               </span><span class="hs-glyph">-&gt;</span><span>  </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier hs-type">SpellData</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span id="buildSpellData"><span class="annot"><span class="annottext">buildSpellData :: Bool -&gt; String -&gt; IO (Maybe SpellData)
+</span><a href="GameData.html#buildSpellData"><span class="hs-identifier hs-var hs-var">buildSpellData</span></a></span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">True</span></span><span> </span><span id="local-6989586621679353361"><span class="annot"><span class="annottext">path :: String
+</span><a href="#local-6989586621679353361"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-22"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Fetching SpellData from local file &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353361"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot;...&quot;</span></span><span>
+</span><span id="line-23"></span><span>    </span><span id="local-6989586621679353359"><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353359"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO String
+</span><a href="Fetch.html#fetchSpellsLocal"><span class="hs-identifier hs-var">fetchSpellsLocal</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353361"><span class="hs-identifier hs-var">path</span></a></span><span>
+</span><span id="line-24"></span><span>    </span><span class="annot"><span class="annottext">Maybe SpellData -&gt; IO (Maybe SpellData)
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Maybe SpellData -&gt; IO (Maybe SpellData))
+-&gt; Maybe SpellData -&gt; IO (Maybe SpellData)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String -&gt; Maybe SpellData
+</span><a href="Parser.html#parseSpellData"><span class="hs-identifier hs-var">parseSpellData</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;\n\nName             : &quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;\n&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353359"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-25"></span><span class="annot"><a href="GameData.html#buildSpellData"><span class="hs-identifier hs-var">buildSpellData</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">False</span></span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-26"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Fetching SpellData remotely from Github...&quot;</span></span><span>
+</span><span id="line-27"></span><span>    </span><span id="local-6989586621679353358"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679353358"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; IO ByteString
+</span><a href="Fetch.html#fetchSpells"><span class="hs-identifier hs-var">fetchSpells</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span>
+</span><span id="line-28"></span><span>    </span><span class="annot"><span class="annottext">Maybe SpellData -&gt; IO (Maybe SpellData)
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(Maybe SpellData -&gt; IO (Maybe SpellData))
+-&gt; Maybe SpellData -&gt; IO (Maybe SpellData)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String -&gt; Maybe SpellData
+</span><a href="Parser.html#parseSpellData"><span class="hs-identifier hs-var">parseSpellData</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;\\r\\n\\r\\nName             : &quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;\\n&quot;</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Maybe SpellData) -&gt; String -&gt; Maybe SpellData
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679353358"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-29"></span><span>
+</span><span id="line-30"></span><span class="hs-comment">-- | Helper function that calls buildSpellData and</span><span>
+</span><span id="line-31"></span><span class="hs-comment">-- writes the resulting SpellData object to a file.</span><span>
+</span><span id="line-32"></span><span class="annot"><a href="GameData.html#buildSpellDataFile"><span class="hs-identifier hs-type">buildSpellDataFile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-comment">-- ^ fetch from a local file or via HTTP</span><span>
+</span><span id="line-33"></span><span>                   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ the path to write the file representation to </span><span>
+</span><span id="line-34"></span><span>                   </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-35"></span><span id="buildSpellDataFile"><span class="annot"><span class="annottext">buildSpellDataFile :: Bool -&gt; String -&gt; IO ()
+</span><a href="GameData.html#buildSpellDataFile"><span class="hs-identifier hs-var hs-var">buildSpellDataFile</span></a></span></span><span> </span><span id="local-6989586621679353355"><span class="annot"><span class="annottext">useLocal :: Bool
+</span><a href="#local-6989586621679353355"><span class="hs-identifier hs-var">useLocal</span></a></span></span><span> </span><span id="local-6989586621679353354"><span class="annot"><span class="annottext">path :: String
+</span><a href="#local-6989586621679353354"><span class="hs-identifier hs-var">path</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Parsing db..&quot;</span></span><span>
+</span><span id="line-37"></span><span>    </span><span id="local-6989586621679353353"><span class="annot"><span class="annottext">Maybe SpellData
+</span><a href="#local-6989586621679353353"><span class="hs-identifier hs-var">o</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; String -&gt; IO (Maybe SpellData)
+</span><a href="GameData.html#buildSpellData"><span class="hs-identifier hs-var">buildSpellData</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679353355"><span class="hs-identifier hs-var">useLocal</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;data/monk.txt&quot;</span></span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Writing File...&quot;</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe SpellData
+</span><a href="#local-6989586621679353353"><span class="hs-identifier hs-var">o</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-40"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679353352"><span class="annot"><span class="annottext">sd :: SpellData
+</span><a href="#local-6989586621679353352"><span class="hs-identifier hs-var">sd</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; IO ()
+</span><span class="hs-identifier hs-var">writeFile</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353354"><span class="hs-identifier hs-var">path</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO ()) -&gt; String -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">SpellData -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">SpellData
+</span><a href="#local-6989586621679353352"><span class="hs-identifier hs-var">sd</span></a></span><span>
+</span><span id="line-41"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Failed to parse spelldata&quot;</span></span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Done.&quot;</span></span><span>
+</span><span id="line-43"></span><span>
+</span><span id="line-44"></span><span class="hs-comment">-- | Main entry point of the module, attempts to do a full gamedata update</span><span>
+</span><span id="line-45"></span><span class="annot"><a href="GameData.html#runGameDataUpdate"><span class="hs-identifier hs-type">runGameDataUpdate</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-comment">-- ^ should do hardInit of db</span><span>
+</span><span id="line-46"></span><span>                  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-comment">-- ^ fetch from local file (true) or via http (false) </span><span>
+</span><span id="line-47"></span><span>                  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-48"></span><span id="runGameDataUpdate"><span class="annot"><span class="annottext">runGameDataUpdate :: Bool -&gt; Bool -&gt; IO ()
+</span><a href="GameData.html#runGameDataUpdate"><span class="hs-identifier hs-var hs-var">runGameDataUpdate</span></a></span></span><span> </span><span id="local-6989586621679353350"><span class="annot"><span class="annottext">hardInit :: Bool
+</span><a href="#local-6989586621679353350"><span class="hs-identifier hs-var">hardInit</span></a></span></span><span> </span><span id="local-6989586621679353349"><span class="annot"><span class="annottext">useLocal :: Bool
+</span><a href="#local-6989586621679353349"><span class="hs-identifier hs-var">useLocal</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Running gamedata update...&quot;</span></span><span>
+</span><span id="line-50"></span><span>    </span><span class="annot"><span class="annottext">Bool -&gt; IO ()
+</span><a href="IOH.html#initIO"><span class="hs-identifier hs-var">IOH.initIO</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679353350"><span class="hs-identifier hs-var">hardInit</span></a></span><span>
+</span><span id="line-51"></span><span>    </span><span id="local-6989586621679353348"><span class="annot"><span class="annottext">Maybe SpellData
+</span><a href="#local-6989586621679353348"><span class="hs-identifier hs-var">sp</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; String -&gt; IO (Maybe SpellData)
+</span><a href="GameData.html#buildSpellData"><span class="hs-identifier hs-var">buildSpellData</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679353349"><span class="hs-identifier hs-var">useLocal</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;data/monk.txt&quot;</span></span><span>
+</span><span id="line-52"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe SpellData
+</span><a href="#local-6989586621679353348"><span class="hs-identifier hs-var">sp</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-53"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679353347"><span class="annot"><span class="annottext">sd :: SpellData
+</span><a href="#local-6989586621679353347"><span class="hs-identifier hs-var">sd</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">SpellData -&gt; IO ()
+</span><a href="IOH.html#storeSpellData"><span class="hs-identifier hs-var">IOH.storeSpellData</span></a></span><span> </span><span class="annot"><span class="annottext">SpellData
+</span><a href="#local-6989586621679353347"><span class="hs-identifier hs-var">sd</span></a></span><span>
+</span><span id="line-54"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Failed to insert spell data&quot;</span></span><span>
+</span><span id="line-55"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Finished gamedata update.&quot;</span></span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span>
+</span><span id="line-58"></span><span>
+</span><span id="line-59"></span></pre></body></html>

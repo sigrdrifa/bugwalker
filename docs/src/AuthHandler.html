@@ -1,0 +1,306 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | module handling authentication and creation of users</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AuthHandler</span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span>
+</span><span id="line-4"></span><span>      </span><span class="annot"><a href="AuthHandler.html#createUser"><span class="hs-identifier">createUser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>      </span><span class="annot"><a href="AuthHandler.html#tryAuthenticate"><span class="hs-identifier">tryAuthenticate</span></a></span><span>
+</span><span id="line-6"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-7"></span><span class="hs-comment">---</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.UUID.V4</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">nextRandom</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.UUID</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">UUID</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">B</span></span><span> </span><span class="hs-keyword">hiding</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">foldr</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">map</span></span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Char8</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">pack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">isAlpha</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">toLower</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Crypto.Hash</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">hashWith</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">SHA256</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">SHA256</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-14"></span><span class="hs-comment">---</span><span>
+</span><span id="line-15"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AuthTypes.html"><span class="hs-identifier">AuthTypes</span></a></span><span>
+</span><span id="line-16"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthResultT"><span class="hs-identifier">AuthResultT</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#AuthFailed"><span class="hs-identifier">AuthFailed</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthOK"><span class="hs-identifier">AuthOK</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>      </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier">AuthenticatedUser</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#AUser"><span class="hs-identifier">AUser</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier">User</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier">User</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userHash"><span class="hs-identifier">userHash</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userUuid"><span class="hs-identifier">userUuid</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userId"><span class="hs-identifier">userId</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userRole"><span class="hs-identifier">userRole</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userName"><span class="hs-identifier">userName</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier">UserRegistration</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#userRegName"><span class="hs-identifier">userRegName</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userRegPass"><span class="hs-identifier">userRegPass</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userRegAvatar"><span class="hs-identifier">userRegAvatar</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Utils.html"><span class="hs-identifier">Utils</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Utils.html#ApiError"><span class="hs-identifier">ApiError</span></a></span><span class="hs-special">(</span><span class="annot"><a href="Utils.html#ValidationError"><span class="hs-identifier">ValidationError</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Utils.html#ValidationResult"><span class="hs-identifier">ValidationResult</span></a></span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-comment">---</span><span>
+</span><span id="line-22"></span><span>
+</span><span id="line-23"></span><span class="hs-keyword">class</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679353697"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="UserPrinter"><span class="annot"><a href="AuthHandler.html#UserPrinter"><span class="hs-identifier hs-var">UserPrinter</span></a></span></span><span> </span><span id="local-6989586621679353697"><span class="annot"><a href="#local-6989586621679353697"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-24"></span><span>  </span><span id="printUser"><span class="annot"><a href="AuthHandler.html#printUser"><span class="hs-identifier hs-type">printUser</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier hs-type">User</span></a></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679353697"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span>
+</span><span id="line-26"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="AuthHandler.html#UserPrinter"><span class="hs-identifier hs-type">UserPrinter</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-27"></span><span>  </span><span id="local-6989586621679353630"><span class="annot"><span class="annottext">printUser :: User -&gt; IO ()
+</span><a href="#local-6989586621679353630"><span class="hs-identifier hs-var hs-var hs-var hs-var">printUser</span></a></span></span><span> </span><span id="local-6989586621679353629"><span class="annot"><span class="annottext">s :: User
+</span><a href="#local-6989586621679353629"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">User -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353629"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-keyword">class</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Monad</span></span><span> </span><span class="annot"><a href="#local-6989586621679353693"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span id="UUIDGenerator"><span class="annot"><a href="AuthHandler.html#UUIDGenerator"><span class="hs-identifier hs-var">UUIDGenerator</span></a></span></span><span> </span><span id="local-6989586621679353693"><span class="annot"><a href="#local-6989586621679353693"><span class="hs-identifier hs-type">m</span></a></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-30"></span><span>  </span><span id="newUUID"><span class="annot"><a href="AuthHandler.html#newUUID"><span class="hs-identifier hs-type">newUUID</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="#local-6989586621679353693"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">UUID</span></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-keyword">instance</span><span> </span><span class="annot"><a href="AuthHandler.html#UUIDGenerator"><span class="hs-identifier hs-type">UUIDGenerator</span></a></span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-33"></span><span>  </span><span id="local-6989586621679353624"><span class="annot"><span class="annottext">newUUID :: IO UUID
+</span><a href="#local-6989586621679353624"><span class="hs-identifier hs-var hs-var hs-var hs-var">newUUID</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO UUID
+</span><span class="hs-identifier hs-var">nextRandom</span></span><span>
+</span><span id="line-34"></span><span>
+</span><span id="line-35"></span><span class="hs-comment">-- | Validates username input</span><span>
+</span><span id="line-36"></span><span class="annot"><a href="AuthHandler.html#validateUserName"><span class="hs-identifier hs-type">validateUserName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ the username input to validate</span><span>
+</span><span id="line-37"></span><span>                 </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Utils.html#ValidationResult"><span class="hs-identifier hs-type">ValidationResult</span></a></span><span>
+</span><span id="line-38"></span><span id="validateUserName"><span class="annot"><span class="annottext">validateUserName :: String -&gt; ValidationResult
+</span><a href="AuthHandler.html#validateUserName"><span class="hs-identifier hs-var hs-var">validateUserName</span></a></span></span><span> </span><span id="local-6989586621679353622"><span class="annot"><span class="annottext">n :: String
+</span><a href="#local-6989586621679353622"><span class="hs-identifier hs-var">n</span></a></span></span><span>
+</span><span id="line-39"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">String -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353622"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="hs-number">3</span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-40"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; ValidationResult
+</span><a href="Utils.html#Invalid"><span class="hs-identifier hs-var">Invalid</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;Username must be at least 3 characters.&quot;</span></span><span>
+</span><span id="line-41"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Char -&gt; Bool -&gt; Bool) -&gt; Bool -&gt; String -&gt; Bool
+forall (t :: * -&gt; *) a b.
+Foldable t =&gt;
+(a -&gt; b -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldr</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; Bool
+</span><span class="hs-operator hs-var">(&amp;&amp;)</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Bool -&gt; Bool) -&gt; (Char -&gt; Bool) -&gt; Char -&gt; Bool -&gt; Bool
+forall b c a. (b -&gt; c) -&gt; (a -&gt; b) -&gt; a -&gt; c
+</span><span class="hs-operator hs-var">.</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><span class="hs-identifier hs-var">isAlpha</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353622"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-42"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; ValidationResult
+</span><a href="Utils.html#Invalid"><span class="hs-identifier hs-var">Invalid</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;Username can only contain letters.&quot;</span></span><span>
+</span><span id="line-43"></span><span>  </span><span class="hs-glyph">|</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">otherwise</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ValidationResult
+</span><a href="Utils.html#Valid"><span class="hs-identifier hs-var">Valid</span></a></span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-comment">-- | Validates password input</span><span>
+</span><span id="line-46"></span><span class="annot"><a href="AuthHandler.html#validatePassword"><span class="hs-identifier hs-type">validatePassword</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">B.ByteString</span></span><span> </span><span class="hs-comment">-- ^ the password to validate</span><span>
+</span><span id="line-47"></span><span>                 </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="Utils.html#ValidationResult"><span class="hs-identifier hs-type">ValidationResult</span></a></span><span>
+</span><span id="line-48"></span><span id="validatePassword"><span class="annot"><span class="annottext">validatePassword :: ByteString -&gt; ValidationResult
+</span><a href="AuthHandler.html#validatePassword"><span class="hs-identifier hs-var hs-var">validatePassword</span></a></span></span><span> </span><span id="local-6989586621679353612"><span class="annot"><span class="annottext">p :: ByteString
+</span><a href="#local-6989586621679353612"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-49"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Int
+</span><span class="hs-identifier hs-var">B.length</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679353612"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&lt;</span></span><span> </span><span class="annot"><span class="hs-number">8</span></span><span> </span><span class="hs-keyword">then</span><span>
+</span><span id="line-50"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; ValidationResult
+</span><a href="Utils.html#Invalid"><span class="hs-identifier hs-var">Invalid</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;Passwords should be longer than 8 characters.&quot;</span></span><span>
+</span><span id="line-51"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">ValidationResult
+</span><a href="Utils.html#Valid"><span class="hs-identifier hs-var">Valid</span></a></span><span>
+</span><span id="line-52"></span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- | generates a SH256 hash of the password using the unique user</span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- UUID as a salt</span><span>
+</span><span id="line-55"></span><span class="annot"><a href="AuthHandler.html#generateHashStr"><span class="hs-identifier hs-type">generateHashStr</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ string representation of password</span><span>
+</span><span id="line-56"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ string repreentation of user UUID</span><span>
+</span><span id="line-57"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ the resulting SHA256 hash</span><span>
+</span><span id="line-58"></span><span id="generateHashStr"><span class="annot"><span class="annottext">generateHashStr :: String -&gt; String -&gt; String
+</span><a href="AuthHandler.html#generateHashStr"><span class="hs-identifier hs-var hs-var">generateHashStr</span></a></span></span><span> </span><span id="local-6989586621679353609"><span class="annot"><span class="annottext">p :: String
+</span><a href="#local-6989586621679353609"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span id="local-6989586621679353608"><span class="annot"><span class="annottext">u :: String
+</span><a href="#local-6989586621679353608"><span class="hs-identifier hs-var">u</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Digest SHA256 -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">(Digest SHA256 -&gt; String) -&gt; Digest SHA256 -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">SHA256 -&gt; ByteString -&gt; Digest SHA256
+forall ba alg.
+(ByteArrayAccess ba, HashAlgorithm alg) =&gt;
+alg -&gt; ba -&gt; Digest alg
+</span><span class="hs-identifier hs-var">hashWith</span></span><span> </span><span class="annot"><span class="annottext">SHA256
+</span><span class="hs-identifier hs-var">SHA256</span></span><span> </span><span class="annot"><span class="annottext">(ByteString -&gt; Digest SHA256) -&gt; ByteString -&gt; Digest SHA256
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; ByteString) -&gt; String -&gt; ByteString
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353609"><span class="hs-identifier hs-var">p</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353608"><span class="hs-identifier hs-var">u</span></a></span><span>
+</span><span id="line-59"></span><span>
+</span><span id="line-60"></span><span class="hs-comment">-- | Attempts to validate and create a new User object from the given registration data</span><span>
+</span><span id="line-61"></span><span id="local-6989586621679353606"><span class="annot"><a href="AuthHandler.html#createUser"><span class="hs-identifier hs-type">createUser</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">(</span><span class="annot"><a href="AuthHandler.html#UserPrinter"><span class="hs-identifier hs-type">UserPrinter</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679353606"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthHandler.html#UUIDGenerator"><span class="hs-identifier hs-type">UUIDGenerator</span></a></span><span> </span><span class="annot"><a href="#local-6989586621679353606"><span class="hs-identifier hs-type">m</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=&gt;</span><span> </span><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier hs-type">UserRegistration</span></a></span><span> </span><span class="hs-comment">-- ^ UserRegistration to create</span><span>
+</span><span id="line-62"></span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span> </span><span class="hs-comment">-- ^ Role of the user to create </span><span>
+</span><span id="line-63"></span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="#local-6989586621679353606"><span class="hs-identifier hs-type">m</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><a href="Utils.html#ApiError"><span class="hs-identifier hs-type">ApiError</span></a></span><span> </span><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier hs-type">User</span></a></span><span class="hs-special">)</span></span><span>
+</span><span id="line-64"></span><span id="createUser"><span class="annot"><span class="annottext">createUser :: UserRegistration -&gt; Int -&gt; m (Either ApiError User)
+</span><a href="AuthHandler.html#createUser"><span class="hs-identifier hs-var hs-var">createUser</span></a></span></span><span> </span><span id="local-6989586621679353605"><span class="annot"><span class="annottext">ur :: UserRegistration
+</span><a href="#local-6989586621679353605"><span class="hs-identifier hs-var">ur</span></a></span></span><span> </span><span id="local-6989586621679353604"><span class="annot"><span class="annottext">uRole :: Int
+</span><a href="#local-6989586621679353604"><span class="hs-identifier hs-var">uRole</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; ValidationResult
+</span><a href="AuthHandler.html#validateUserName"><span class="hs-identifier hs-var">validateUserName</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353603"><span class="hs-identifier hs-var">uName</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-66"></span><span>          </span><span class="annot"><span class="annottext">ByteString -&gt; ValidationResult
+</span><a href="AuthHandler.html#validatePassword"><span class="hs-identifier hs-var">validatePassword</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679353602"><span class="hs-identifier hs-var">uPass</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-67"></span><span>    </span><span class="hs-keyword">of</span><span>
+</span><span id="line-68"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Utils.html#Invalid"><span class="hs-identifier hs-type">Invalid</span></a></span><span> </span><span id="local-6989586621679353601"><span class="annot"><span class="annottext">r1 :: String
+</span><a href="#local-6989586621679353601"><span class="hs-identifier hs-var">r1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Utils.html#Invalid"><span class="hs-identifier hs-type">Invalid</span></a></span><span> </span><span id="local-6989586621679353600"><span class="annot"><span class="annottext">r2 :: String
+</span><a href="#local-6989586621679353600"><span class="hs-identifier hs-var">r2</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either ApiError User -&gt; m (Either ApiError User)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either ApiError User -&gt; m (Either ApiError User))
+-&gt; Either ApiError User -&gt; m (Either ApiError User)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ApiError -&gt; Either ApiError User
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(ApiError -&gt; Either ApiError User)
+-&gt; ApiError -&gt; Either ApiError User
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; ApiError
+</span><a href="Utils.html#ValidationError"><span class="hs-identifier hs-var">ValidationError</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;username password&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353601"><span class="hs-identifier hs-var">r1</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot; | &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353600"><span class="hs-identifier hs-var">r2</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-69"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Utils.html#Valid"><span class="hs-identifier hs-type">Valid</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Utils.html#Invalid"><span class="hs-identifier hs-type">Invalid</span></a></span><span> </span><span id="local-6989586621679353599"><span class="annot"><span class="annottext">r2 :: String
+</span><a href="#local-6989586621679353599"><span class="hs-identifier hs-var">r2</span></a></span></span><span class="hs-special">)</span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either ApiError User -&gt; m (Either ApiError User)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either ApiError User -&gt; m (Either ApiError User))
+-&gt; Either ApiError User -&gt; m (Either ApiError User)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ApiError -&gt; Either ApiError User
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(ApiError -&gt; Either ApiError User)
+-&gt; ApiError -&gt; Either ApiError User
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; ApiError
+</span><a href="Utils.html#ValidationError"><span class="hs-identifier hs-var">ValidationError</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;password&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353599"><span class="hs-identifier hs-var">r2</span></a></span><span>
+</span><span id="line-70"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Utils.html#Invalid"><span class="hs-identifier hs-type">Invalid</span></a></span><span> </span><span id="local-6989586621679353598"><span class="annot"><span class="annottext">r1 :: String
+</span><a href="#local-6989586621679353598"><span class="hs-identifier hs-var">r1</span></a></span></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Utils.html#Valid"><span class="hs-identifier hs-type">Valid</span></a></span><span class="hs-special">)</span><span>      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Either ApiError User -&gt; m (Either ApiError User)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either ApiError User -&gt; m (Either ApiError User))
+-&gt; Either ApiError User -&gt; m (Either ApiError User)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ApiError -&gt; Either ApiError User
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="annottext">(ApiError -&gt; Either ApiError User)
+-&gt; ApiError -&gt; Either ApiError User
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; ApiError
+</span><a href="Utils.html#ValidationError"><span class="hs-identifier hs-var">ValidationError</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;username&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353598"><span class="hs-identifier hs-var">r1</span></a></span><span>
+</span><span id="line-71"></span><span>        </span><span class="hs-special">(</span><span class="annot"><a href="Utils.html#Valid"><span class="hs-identifier hs-type">Valid</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="Utils.html#Valid"><span class="hs-identifier hs-type">Valid</span></a></span><span class="hs-special">)</span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-72"></span><span>            </span><span id="local-6989586621679353597"><span class="annot"><span class="annottext">UUID
+</span><a href="#local-6989586621679353597"><span class="hs-identifier hs-var">uuid</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">m UUID
+forall (m :: * -&gt; *). UUIDGenerator m =&gt; m UUID
+</span><a href="AuthHandler.html#newUUID"><span class="hs-identifier hs-var">newUUID</span></a></span><span>
+</span><span id="line-73"></span><span>            </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679353596"><span class="annot"><span class="annottext">hash :: String
+</span><a href="#local-6989586621679353596"><span class="hs-identifier hs-var hs-var">hash</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+</span><a href="AuthHandler.html#generateHashStr"><span class="hs-identifier hs-var">generateHashStr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ByteString -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679353602"><span class="hs-identifier hs-var">uPass</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UUID -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">UUID
+</span><a href="#local-6989586621679353597"><span class="hs-identifier hs-var">uuid</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-74"></span><span>                </span><span id="local-6989586621679353595"><span class="annot"><span class="annottext">user :: User
+</span><a href="#local-6989586621679353595"><span class="hs-identifier hs-var hs-var">user</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">Int64
+-&gt; Maybe String
+-&gt; Maybe String
+-&gt; UUID
+-&gt; String
+-&gt; String
+-&gt; String
+-&gt; Int
+-&gt; Int
+-&gt; User
+</span><a href="AuthTypes.html#User"><span class="hs-identifier hs-var">User</span></a></span><span> </span><span class="annot"><span class="hs-number">0</span></span><span> </span><span class="annot"><span class="annottext">Maybe String
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">Maybe String
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span> </span><span class="annot"><span class="annottext">UUID
+</span><a href="#local-6989586621679353597"><span class="hs-identifier hs-var">uuid</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353596"><span class="hs-identifier hs-var">hash</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">(Char -&gt; Char) -&gt; String -&gt; String
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char
+</span><span class="hs-identifier hs-var">toLower</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353603"><span class="hs-identifier hs-var">uName</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679353604"><span class="hs-identifier hs-var">uRole</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679353594"><span class="hs-identifier hs-var">uAvatar</span></a></span><span>
+</span><span id="line-75"></span><span>            </span><span class="annot"><span class="annottext">User -&gt; m ()
+forall (m :: * -&gt; *). UserPrinter m =&gt; User -&gt; m ()
+</span><a href="AuthHandler.html#printUser"><span class="hs-identifier hs-var">printUser</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353595"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-76"></span><span>            </span><span class="annot"><span class="annottext">Either ApiError User -&gt; m (Either ApiError User)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Either ApiError User -&gt; m (Either ApiError User))
+-&gt; Either ApiError User -&gt; m (Either ApiError User)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; Either ApiError User
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353595"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-77"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-78"></span><span>        </span><span id="local-6989586621679353603"><span class="annot"><span class="annottext">uName :: String
+</span><a href="#local-6989586621679353603"><span class="hs-identifier hs-var hs-var">uName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">UserRegistration -&gt; String
+</span><a href="AuthTypes.html#userRegName"><span class="hs-identifier hs-var hs-var">userRegName</span></a></span><span> </span><span class="annot"><span class="annottext">UserRegistration
+</span><a href="#local-6989586621679353605"><span class="hs-identifier hs-var">ur</span></a></span><span>
+</span><span id="line-79"></span><span>        </span><span id="local-6989586621679353602"><span class="annot"><span class="annottext">uPass :: ByteString
+</span><a href="#local-6989586621679353602"><span class="hs-identifier hs-var hs-var">uPass</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; ByteString) -&gt; String -&gt; ByteString
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">UserRegistration -&gt; String
+</span><a href="AuthTypes.html#userRegPass"><span class="hs-identifier hs-var hs-var">userRegPass</span></a></span><span> </span><span class="annot"><span class="annottext">UserRegistration
+</span><a href="#local-6989586621679353605"><span class="hs-identifier hs-var">ur</span></a></span><span>
+</span><span id="line-80"></span><span>        </span><span id="local-6989586621679353594"><span class="annot"><span class="annottext">uAvatar :: Int
+</span><a href="#local-6989586621679353594"><span class="hs-identifier hs-var hs-var">uAvatar</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">UserRegistration -&gt; Int
+</span><a href="AuthTypes.html#userRegAvatar"><span class="hs-identifier hs-var hs-var">userRegAvatar</span></a></span><span> </span><span class="annot"><span class="annottext">UserRegistration
+</span><a href="#local-6989586621679353605"><span class="hs-identifier hs-var">ur</span></a></span><span>
+</span><span id="line-81"></span><span>
+</span><span id="line-82"></span><span class="hs-comment">-- | Attempts to authenticate a given user with the given password</span><span>
+</span><span id="line-83"></span><span class="annot"><a href="AuthHandler.html#tryAuthenticate"><span class="hs-identifier hs-type">tryAuthenticate</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier hs-type">User</span></a></span><span> </span><span class="hs-comment">-- ^ The user to authenticate</span><span>
+</span><span id="line-84"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ string representation of the password</span><span>
+</span><span id="line-85"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthResultT"><span class="hs-identifier hs-type">AuthResultT</span></a></span><span> </span><span class="hs-comment">-- ^ the authentication result</span><span>
+</span><span id="line-86"></span><span id="tryAuthenticate"><span class="annot"><span class="annottext">tryAuthenticate :: User -&gt; String -&gt; AuthResultT
+</span><a href="AuthHandler.html#tryAuthenticate"><span class="hs-identifier hs-var hs-var">tryAuthenticate</span></a></span></span><span> </span><span id="local-6989586621679353593"><span class="annot"><span class="annottext">user :: User
+</span><a href="#local-6989586621679353593"><span class="hs-identifier hs-var">user</span></a></span></span><span> </span><span id="local-6989586621679353592"><span class="annot"><span class="annottext">p :: String
+</span><a href="#local-6989586621679353592"><span class="hs-identifier hs-var">p</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-87"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353591"><span class="hs-identifier hs-var">uHash</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+</span><a href="AuthHandler.html#generateHashStr"><span class="hs-identifier hs-var">generateHashStr</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ByteString -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">(ByteString -&gt; String) -&gt; ByteString -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">pack</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353592"><span class="hs-identifier hs-var">p</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UUID -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">UUID
+</span><a href="#local-6989586621679353590"><span class="hs-identifier hs-var">uuid</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">String -&gt; AuthenticatedUser -&gt; AuthResultT
+</span><a href="AuthTypes.html#AuthOK"><span class="hs-identifier hs-var">AuthOK</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int64 -&gt; Int -&gt; String -&gt; String -&gt; AuthenticatedUser
+</span><a href="AuthTypes.html#AUser"><span class="hs-identifier hs-var">AUser</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353589"><span class="hs-identifier hs-var">uId</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679353588"><span class="hs-identifier hs-var">uRole</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353587"><span class="hs-identifier hs-var">uName</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;If Henry went to \
+                          \Hogwarts, he would be in Slytherin&quot;</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">String -&gt; AuthResultT
+</span><a href="AuthTypes.html#AuthFailed"><span class="hs-identifier hs-var">AuthFailed</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-string">&quot;Invalid password for User &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="AuthTypes.html#userName"><span class="hs-identifier hs-var hs-var">userName</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353593"><span class="hs-identifier hs-var">user</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot;.&quot;</span></span><span class="hs-special">)</span><span>
+</span><span id="line-89"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-90"></span><span>        </span><span id="local-6989586621679353591"><span class="annot"><span class="annottext">uHash :: String
+</span><a href="#local-6989586621679353591"><span class="hs-identifier hs-var hs-var">uHash</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="AuthTypes.html#userHash"><span class="hs-identifier hs-var hs-var">userHash</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353593"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-91"></span><span>        </span><span id="local-6989586621679353590"><span class="annot"><span class="annottext">uuid :: UUID
+</span><a href="#local-6989586621679353590"><span class="hs-identifier hs-var hs-var">uuid</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">User -&gt; UUID
+</span><a href="AuthTypes.html#userUuid"><span class="hs-identifier hs-var hs-var">userUuid</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353593"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-92"></span><span>        </span><span id="local-6989586621679353589"><span class="annot"><span class="annottext">uId :: Int64
+</span><a href="#local-6989586621679353589"><span class="hs-identifier hs-var hs-var">uId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">User -&gt; Int64
+</span><a href="AuthTypes.html#userId"><span class="hs-identifier hs-var hs-var">userId</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353593"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-93"></span><span>        </span><span id="local-6989586621679353588"><span class="annot"><span class="annottext">uRole :: Int
+</span><a href="#local-6989586621679353588"><span class="hs-identifier hs-var hs-var">uRole</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">User -&gt; Int
+</span><a href="AuthTypes.html#userRole"><span class="hs-identifier hs-var hs-var">userRole</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353593"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-94"></span><span>        </span><span id="local-6989586621679353587"><span class="annot"><span class="annottext">uName :: String
+</span><a href="#local-6989586621679353587"><span class="hs-identifier hs-var hs-var">uName</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">User -&gt; String
+</span><a href="AuthTypes.html#userName"><span class="hs-identifier hs-var hs-var">userName</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353593"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-95"></span><span>
+</span><span id="line-96"></span></pre></body></html>

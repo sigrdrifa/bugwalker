@@ -1,0 +1,263 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Contains functions needed for parsing spelldump data into ADTs.</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">Parser</span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Parser.html#parseSpells"><span class="hs-identifier">parseSpells</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>      </span><span class="annot"><a href="Parser.html#parseSpellData"><span class="hs-identifier">parseSpellData</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.Split</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">splitOn</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">find</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">isPrefixOf</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">isDigit</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GameDataTypes.html"><span class="hs-identifier">GameDataTypes</span></a></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="GameDataTypes.html#createBuild"><span class="hs-identifier">createBuild</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier">Spell</span></a></span><span class="hs-special">(</span><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier">Spell</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier">SpellData</span></a></span><span class="hs-special">(</span><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier">SpellData</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span>
+</span><span id="line-14"></span><span class="hs-comment">-- | Attempts to extract spellId from the given SpellData dump</span><span>
+</span><span id="line-15"></span><span class="annot"><a href="Parser.html#extractSpellId"><span class="hs-identifier hs-type">extractSpellId</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ SpellData string containing the SpellId identifier</span><span>
+</span><span id="line-16"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span>
+</span><span id="line-17"></span><span id="extractSpellId"><span class="annot"><span class="annottext">extractSpellId :: String -&gt; Maybe Int
+</span><a href="Parser.html#extractSpellId"><span class="hs-identifier hs-var hs-var">extractSpellId</span></a></span></span><span> </span><span id="local-6989586621679352580"><span class="annot"><span class="annottext">s :: String
+</span><a href="#local-6989586621679352580"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-18"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">(String -&gt; Bool) -&gt; [String] -&gt; Maybe String
+forall (t :: * -&gt; *) a. Foldable t =&gt; (a -&gt; Bool) -&gt; t a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">find</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; String -&gt; Bool
+forall a. Eq a =&gt; [a] -&gt; [a] -&gt; Bool
+</span><span class="hs-identifier hs-var">isPrefixOf</span></span><span> </span><span class="annot"><span class="hs-string">&quot;(id=&quot;</span></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([String] -&gt; Maybe String) -&gt; [String] -&gt; Maybe String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [String]
+</span><span class="hs-identifier hs-var">words</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352580"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-19"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352578"><span class="annot"><span class="annottext">id :: String
+</span><a href="#local-6989586621679352578"><span class="hs-identifier hs-var">id</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Int -&gt; Maybe Int
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; Maybe Int) -&gt; Int -&gt; Maybe Int
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Int
+forall a. Read a =&gt; String -&gt; a
+</span><span class="hs-identifier hs-var">read</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Int) -&gt; String -&gt; Int
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Char -&gt; Bool) -&gt; String -&gt; String
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">takeWhile</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Bool
+</span><span class="hs-identifier hs-var">isDigit</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; String) -&gt; String -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String
+forall a. Int -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">drop</span></span><span> </span><span class="annot"><span class="hs-number">4</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352578"><span class="hs-identifier hs-var">id</span></a></span><span>
+</span><span id="line-20"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Int
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-21"></span><span>
+</span><span id="line-22"></span><span class="hs-comment">-- | Attempts to extract spellName from the given SpellData dump</span><span>
+</span><span id="line-23"></span><span class="annot"><a href="Parser.html#extractSpellName"><span class="hs-identifier hs-type">extractSpellName</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ The string containing the spellName identifier</span><span>
+</span><span id="line-24"></span><span>                 </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-25"></span><span id="extractSpellName"><span class="annot"><span class="annottext">extractSpellName :: String -&gt; Maybe String
+</span><a href="Parser.html#extractSpellName"><span class="hs-identifier hs-var hs-var">extractSpellName</span></a></span></span><span> </span><span id="local-6989586621679352573"><span class="annot"><span class="annottext">s :: String
+</span><a href="#local-6989586621679352573"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-26"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[String] -&gt; Bool
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Bool
+</span><span class="hs-identifier hs-var">null</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352570"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">then</span><span>
+</span><span id="line-27"></span><span>        </span><span class="annot"><span class="annottext">String -&gt; Maybe String
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; String
+forall a. [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">init</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; String) -&gt; String -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; String -&gt; String) -&gt; String -&gt; [String] -&gt; String
+forall (t :: * -&gt; *) a b.
+Foldable t =&gt;
+(a -&gt; b -&gt; b) -&gt; b -&gt; t a -&gt; b
+</span><span class="hs-identifier hs-var">foldr</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679352567"><span class="annot"><span class="annottext">x :: String
+</span><a href="#local-6989586621679352567"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span id="local-6989586621679352566"><span class="annot"><span class="annottext">y :: String
+</span><a href="#local-6989586621679352566"><span class="hs-identifier hs-var">y</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352567"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot; &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352566"><span class="hs-identifier hs-var">y</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-string">&quot;&quot;</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352570"><span class="hs-identifier hs-var">n</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>    </span><span class="hs-keyword">else</span><span>
+</span><span id="line-29"></span><span>        </span><span class="annot"><span class="annottext">Maybe String
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-30"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679352570"><span class="annot"><span class="annottext">n :: [String]
+</span><a href="#local-6989586621679352570"><span class="hs-identifier hs-var hs-var">n</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">(String -&gt; Bool) -&gt; [String] -&gt; [String]
+forall a. (a -&gt; Bool) -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">takeWhile</span></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679352565"><span class="annot"><span class="annottext">x :: String
+</span><a href="#local-6989586621679352565"><span class="hs-identifier hs-var">x</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-char">'('</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Char
+forall a. [a] -&gt; a
+</span><span class="hs-identifier hs-var">head</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352565"><span class="hs-identifier hs-var">x</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">([String] -&gt; [String]) -&gt; [String] -&gt; [String]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [String]
+</span><span class="hs-identifier hs-var">words</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352573"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-31"></span><span>
+</span><span id="line-32"></span><span class="hs-comment">-- | attempts to extract spellDesc from the given SpellData dump</span><span>
+</span><span id="line-33"></span><span class="annot"><a href="Parser.html#extractSpellDescription"><span class="hs-identifier hs-type">extractSpellDescription</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">]</span><span> </span><span class="hs-comment">-- ^ SpellData dump that we can find Description in</span><span>
+</span><span id="line-34"></span><span>                        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-35"></span><span id="extractSpellDescription"><span class="annot"><span class="annottext">extractSpellDescription :: [String] -&gt; Maybe String
+</span><a href="Parser.html#extractSpellDescription"><span class="hs-identifier hs-var hs-var">extractSpellDescription</span></a></span></span><span> </span><span id="local-6989586621679352561"><span class="annot"><span class="annottext">s :: [String]
+</span><a href="#local-6989586621679352561"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-36"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">(String -&gt; Bool) -&gt; [String] -&gt; Maybe String
+forall (t :: * -&gt; *) a. Foldable t =&gt; (a -&gt; Bool) -&gt; t a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">find</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; String -&gt; Bool
+forall a. Eq a =&gt; [a] -&gt; [a] -&gt; Bool
+</span><span class="hs-identifier hs-var">isPrefixOf</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352560"><span class="hs-identifier hs-var">filter</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352561"><span class="hs-identifier hs-var">s</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-37"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352559"><span class="annot"><span class="annottext">f :: String
+</span><a href="#local-6989586621679352559"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Maybe String
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Maybe String) -&gt; String -&gt; Maybe String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String
+forall a. Int -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">drop</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; Int
+forall (t :: * -&gt; *) a. Foldable t =&gt; t a -&gt; Int
+</span><span class="hs-identifier hs-var">length</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352560"><span class="hs-identifier hs-var">filter</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352559"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-38"></span><span>        </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe String
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679352560"><span class="annot"><span class="annottext">filter :: String
+</span><a href="#local-6989586621679352560"><span class="hs-identifier hs-var hs-var">filter</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-string">&quot;Description      : &quot;</span></span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- | Attempts to parse a valid Spell from the given SpellData dump</span><span>
+</span><span id="line-42"></span><span class="annot"><a href="Parser.html#parseSpell"><span class="hs-identifier hs-type">parseSpell</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ Delimiter to use when splitting SpellData dump</span><span>
+</span><span id="line-43"></span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ SpellData dump</span><span>
+</span><span id="line-44"></span><span>           </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier hs-type">Spell</span></a></span><span>
+</span><span id="line-45"></span><span id="parseSpell"><span class="annot"><span class="annottext">parseSpell :: String -&gt; String -&gt; Maybe Spell
+</span><a href="Parser.html#parseSpell"><span class="hs-identifier hs-var hs-var">parseSpell</span></a></span></span><span> </span><span id="local-6989586621679352556"><span class="annot"><span class="annottext">d :: String
+</span><a href="#local-6989586621679352556"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span id="local-6989586621679352555"><span class="annot"><span class="annottext">s :: String
+</span><a href="#local-6989586621679352555"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-46"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; Maybe Int
+</span><a href="Parser.html#extractSpellId"><span class="hs-identifier hs-var">extractSpellId</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Maybe Int) -&gt; String -&gt; Maybe Int
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. [a] -&gt; a
+</span><span class="hs-identifier hs-var">head</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352554"><span class="hs-identifier hs-var">parts</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-47"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352553"><span class="annot"><span class="annottext">spId :: Int
+</span><a href="#local-6989586621679352553"><span class="hs-identifier hs-var">spId</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-48"></span><span>            </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; Maybe String
+</span><a href="Parser.html#extractSpellName"><span class="hs-identifier hs-var">extractSpellName</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; Maybe String) -&gt; String -&gt; Maybe String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. [a] -&gt; a
+</span><span class="hs-identifier hs-var">head</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352554"><span class="hs-identifier hs-var">parts</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-49"></span><span>                </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352552"><span class="annot"><span class="annottext">spName :: String
+</span><a href="#local-6989586621679352552"><span class="hs-identifier hs-var">spName</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-50"></span><span>                    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; Maybe String
+</span><a href="Parser.html#extractSpellDescription"><span class="hs-identifier hs-var">extractSpellDescription</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352554"><span class="hs-identifier hs-var">parts</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-51"></span><span>                        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352551"><span class="annot"><span class="annottext">spDesc :: String
+</span><a href="#local-6989586621679352551"><span class="hs-identifier hs-var">spDesc</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Spell -&gt; Maybe Spell
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">(Spell -&gt; Maybe Spell) -&gt; Spell -&gt; Maybe Spell
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String -&gt; Spell
+</span><a href="GameDataTypes.html#Spell"><span class="hs-identifier hs-var">Spell</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679352553"><span class="hs-identifier hs-var">spId</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352552"><span class="hs-identifier hs-var">spName</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352551"><span class="hs-identifier hs-var">spDesc</span></a></span><span>
+</span><span id="line-52"></span><span>                        </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Spell
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-53"></span><span>                </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Spell
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-54"></span><span>        </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Spell
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-55"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679352554"><span class="annot"><span class="annottext">parts :: [String]
+</span><a href="#local-6989586621679352554"><span class="hs-identifier hs-var hs-var">parts</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; [String]
+forall a. Eq a =&gt; [a] -&gt; [a] -&gt; [[a]]
+</span><span class="hs-identifier hs-var">splitOn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352556"><span class="hs-identifier hs-var">d</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352555"><span class="hs-identifier hs-var">s</span></a></span><span>
+</span><span id="line-56"></span><span>
+</span><span id="line-57"></span><span class="hs-comment">-- | Attempts to parse a list of SpellData dump chunks to extract a list of Spells.</span><span>
+</span><span id="line-58"></span><span class="annot"><a href="Parser.html#parseSpells"><span class="hs-identifier hs-type">parseSpells</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ Delimiter to use when splitting SpellData dump</span><span>
+</span><span id="line-59"></span><span>            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">]</span><span> </span><span class="hs-comment">-- ^ The SpellData Dump chunks</span><span>
+</span><span id="line-60"></span><span>            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier hs-type">Spell</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-61"></span><span id="parseSpells"><span class="annot"><span class="annottext">parseSpells :: String -&gt; [String] -&gt; [Spell]
+</span><a href="Parser.html#parseSpells"><span class="hs-identifier hs-var hs-var">parseSpells</span></a></span></span><span> </span><span class="hs-identifier">_</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>         </span><span class="hs-glyph">=</span><span> </span><span class="hs-special">[</span><span class="hs-special">]</span><span>
+</span><span id="line-62"></span><span class="annot"><a href="Parser.html#parseSpells"><span class="hs-identifier hs-var">parseSpells</span></a></span><span> </span><span id="local-6989586621679352550"><span class="annot"><span class="annottext">delim :: String
+</span><a href="#local-6989586621679352550"><span class="hs-identifier hs-var">delim</span></a></span></span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352549"><span class="annot"><span class="annottext">x :: String
+</span><a href="#local-6989586621679352549"><span class="hs-identifier hs-var">x</span></a></span></span><span class="annot"><span class="hs-glyph hs-type">:</span></span><span id="local-6989586621679352548"><span class="annot"><span class="annottext">xs :: [String]
+</span><a href="#local-6989586621679352548"><span class="hs-identifier hs-var">xs</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-63"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; Maybe Spell
+</span><a href="Parser.html#parseSpell"><span class="hs-identifier hs-var">parseSpell</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352550"><span class="hs-identifier hs-var">delim</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352549"><span class="hs-identifier hs-var">x</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-64"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352547"><span class="annot"><span class="annottext">spell :: Spell
+</span><a href="#local-6989586621679352547"><span class="hs-identifier hs-var">spell</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Spell
+</span><a href="#local-6989586621679352547"><span class="hs-identifier hs-var">spell</span></a></span><span> </span><span class="annot"><span class="annottext">Spell -&gt; [Spell] -&gt; [Spell]
+forall a. a -&gt; [a] -&gt; [a]
+</span><span class="hs-glyph hs-var">:</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; [Spell]
+</span><a href="Parser.html#parseSpells"><span class="hs-identifier hs-var">parseSpells</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352550"><span class="hs-identifier hs-var">delim</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352548"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-65"></span><span>        </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; [Spell]
+</span><a href="Parser.html#parseSpells"><span class="hs-identifier hs-var">parseSpells</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352550"><span class="hs-identifier hs-var">delim</span></a></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352548"><span class="hs-identifier hs-var">xs</span></a></span><span>
+</span><span id="line-66"></span><span>
+</span><span id="line-67"></span><span class="hs-comment">-- | Attempts to parse a SpellData dump and generate the full SpellData representation of it</span><span>
+</span><span id="line-68"></span><span class="annot"><a href="Parser.html#parseSpellData"><span class="hs-identifier hs-type">parseSpellData</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ Delimiter to use when splitting SpellData dump</span><span>
+</span><span id="line-69"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ Delimiter to use when splitting the individual Spell data</span><span>
+</span><span id="line-70"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ the SpellData dump</span><span>
+</span><span id="line-71"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier hs-type">SpellData</span></a></span><span>
+</span><span id="line-72"></span><span id="parseSpellData"><span class="annot"><span class="annottext">parseSpellData :: String -&gt; String -&gt; String -&gt; Maybe SpellData
+</span><a href="Parser.html#parseSpellData"><span class="hs-identifier hs-var hs-var">parseSpellData</span></a></span></span><span> </span><span id="local-6989586621679352546"><span class="annot"><span class="annottext">delimiter :: String
+</span><a href="#local-6989586621679352546"><span class="hs-identifier hs-var">delimiter</span></a></span></span><span> </span><span id="local-6989586621679352545"><span class="annot"><span class="annottext">spellDelim :: String
+</span><a href="#local-6989586621679352545"><span class="hs-identifier hs-var">spellDelim</span></a></span></span><span> </span><span id="local-6989586621679352544"><span class="annot"><span class="annottext">input :: String
+</span><a href="#local-6989586621679352544"><span class="hs-identifier hs-var">input</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-73"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; Either String Build
+</span><a href="GameDataTypes.html#createBuild"><span class="hs-identifier hs-var">createBuild</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352543"><span class="hs-identifier hs-var">metadata</span></a></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; Int -&gt; String
+forall a. [a] -&gt; Int -&gt; a
+</span><span class="hs-operator hs-var">!!</span></span><span> </span><span class="annot"><span class="hs-number">9</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352543"><span class="hs-identifier hs-var">metadata</span></a></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; Int -&gt; String
+forall a. [a] -&gt; Int -&gt; a
+</span><span class="hs-operator hs-var">!!</span></span><span> </span><span class="annot"><span class="hs-number">6</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-74"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679352541"><span class="annot"><span class="annottext">b :: Build
+</span><a href="#local-6989586621679352541"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">SpellData -&gt; Maybe SpellData
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Build -&gt; [Spell] -&gt; SpellData
+</span><a href="GameDataTypes.html#SpellData"><span class="hs-identifier hs-var">SpellData</span></a></span><span> </span><span class="annot"><span class="annottext">Build
+</span><a href="#local-6989586621679352541"><span class="hs-identifier hs-var">b</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; [String] -&gt; [Spell]
+</span><a href="Parser.html#parseSpells"><span class="hs-identifier hs-var">parseSpells</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352545"><span class="hs-identifier hs-var">spellDelim</span></a></span><span> </span><span class="annot"><span class="annottext">([String] -&gt; [Spell]) -&gt; [String] -&gt; [Spell]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; [String] -&gt; [String]
+forall a. Int -&gt; [a] -&gt; [a]
+</span><span class="hs-identifier hs-var">drop</span></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352540"><span class="hs-identifier hs-var">t</span></a></span><span class="hs-special">)</span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679352539"><span class="annot"><span class="annottext">s :: String
+</span><a href="#local-6989586621679352539"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe SpellData
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-76"></span><span>    </span><span class="hs-keyword">where</span><span> </span><span id="local-6989586621679352540"><span class="annot"><span class="annottext">t :: [String]
+</span><a href="#local-6989586621679352540"><span class="hs-identifier hs-var hs-var">t</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; [String]
+forall a. Eq a =&gt; [a] -&gt; [a] -&gt; [[a]]
+</span><span class="hs-identifier hs-var">splitOn</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352546"><span class="hs-identifier hs-var">delimiter</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352544"><span class="hs-identifier hs-var">input</span></a></span><span>
+</span><span id="line-77"></span><span>          </span><span id="local-6989586621679352543"><span class="annot"><span class="annottext">metadata :: [String]
+</span><a href="#local-6989586621679352543"><span class="hs-identifier hs-var hs-var">metadata</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; [String]
+</span><span class="hs-identifier hs-var">words</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; [String]) -&gt; String -&gt; [String]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. [a] -&gt; a
+</span><span class="hs-identifier hs-var">head</span></span><span> </span><span class="annot"><span class="annottext">[String]
+</span><a href="#local-6989586621679352540"><span class="hs-identifier hs-var">t</span></a></span><span>
+</span><span id="line-78"></span></pre></body></html>

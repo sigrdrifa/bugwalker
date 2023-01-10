@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Types used for the GameData lib </span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">GameDataTypes</span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="GameDataTypes.html#Build"><span class="hs-identifier">Build</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-4"></span><span>      </span><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier">SpellData</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>      </span><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier">Spell</span></a></span><span> </span><span class="hs-special">(</span><span class="hs-glyph">..</span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>      </span><span class="annot"><a href="GameDataTypes.html#createBuild"><span class="hs-identifier">createBuild</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>      </span><span class="annot"><a href="GameDataTypes.html#toBuildString"><span class="hs-identifier">toBuildString</span></a></span><span>
+</span><span id="line-8"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-9"></span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.List.Split</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">splitOn</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Text.Read</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">readMaybe</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span>
+</span><span id="line-13"></span><span class="hs-comment">{- Data Types -}</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | Represents a Game build</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">data</span><span> </span><span id="Build"><span class="annot"><a href="GameDataTypes.html#Build"><span class="hs-identifier hs-var">Build</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Build"><span class="annot"><a href="GameDataTypes.html#Build"><span class="hs-identifier hs-var">Build</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-17"></span><span>  </span><span id="expV"><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#expV"><span class="hs-identifier hs-var hs-var">expV</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>  </span><span id="major"><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#major"><span class="hs-identifier hs-var hs-var">major</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-19"></span><span>  </span><span id="minor"><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#minor"><span class="hs-identifier hs-var hs-var">minor</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-20"></span><span>  </span><span id="version"><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#version"><span class="hs-identifier hs-var hs-var">version</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-21"></span><span>  </span><span id="date"><span class="annot"><span class="annottext">Build -&gt; String
+</span><a href="GameDataTypes.html#date"><span class="hs-identifier hs-var hs-var">date</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-22"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352450"><span id="local-6989586621679352452"><span id="local-6989586621679352454"><span class="annot"><span class="annottext">Int -&gt; Build -&gt; ShowS
+[Build] -&gt; ShowS
+Build -&gt; String
+(Int -&gt; Build -&gt; ShowS)
+-&gt; (Build -&gt; String) -&gt; ([Build] -&gt; ShowS) -&gt; Show Build
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [Build] -&gt; ShowS
+$cshowList :: [Build] -&gt; ShowS
+show :: Build -&gt; String
+$cshow :: Build -&gt; String
+showsPrec :: Int -&gt; Build -&gt; ShowS
+$cshowsPrec :: Int -&gt; Build -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352445"><span id="local-6989586621679352447"><span class="annot"><span class="annottext">Build -&gt; Build -&gt; Bool
+(Build -&gt; Build -&gt; Bool) -&gt; (Build -&gt; Build -&gt; Bool) -&gt; Eq Build
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: Build -&gt; Build -&gt; Bool
+$c/= :: Build -&gt; Build -&gt; Bool
+== :: Build -&gt; Build -&gt; Bool
+$c== :: Build -&gt; Build -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span>
+</span><span id="line-24"></span><span class="hs-comment">-- | A single Game Spell </span><span>
+</span><span id="line-25"></span><span class="hs-keyword">data</span><span> </span><span id="Spell"><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier hs-var">Spell</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="Spell"><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier hs-var">Spell</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-26"></span><span>    </span><span id="spellId"><span class="annot"><span class="annottext">Spell -&gt; Int
+</span><a href="GameDataTypes.html#spellId"><span class="hs-identifier hs-var hs-var">spellId</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int</span></span><span class="hs-special">,</span><span>
+</span><span id="line-27"></span><span>    </span><span id="spellName"><span class="annot"><span class="annottext">Spell -&gt; String
+</span><a href="GameDataTypes.html#spellName"><span class="hs-identifier hs-var hs-var">spellName</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>    </span><span id="spellDesc"><span class="annot"><span class="annottext">Spell -&gt; String
+</span><a href="GameDataTypes.html#spellDesc"><span class="hs-identifier hs-var hs-var">spellDesc</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-29"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352436"><span id="local-6989586621679352438"><span class="annot"><span class="annottext">Spell -&gt; Spell -&gt; Bool
+(Spell -&gt; Spell -&gt; Bool) -&gt; (Spell -&gt; Spell -&gt; Bool) -&gt; Eq Spell
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: Spell -&gt; Spell -&gt; Bool
+$c/= :: Spell -&gt; Spell -&gt; Bool
+== :: Spell -&gt; Spell -&gt; Bool
+$c== :: Spell -&gt; Spell -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-30"></span><span>
+</span><span id="line-31"></span><span class="hs-keyword">instance</span><span> </span><span id="local-6989586621679352431"><span id="local-6989586621679352434"><span class="annot"><span class="hs-identifier hs-type">Show</span></span><span> </span><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier hs-type">Spell</span></a></span></span></span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-32"></span><span>   </span><span id="local-6989586621679352430"><span class="annot"><span class="annottext">show :: Spell -&gt; String
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var">show</span></span></span><span> </span><span id="local-6989586621679352428"><span class="annot"><span class="annottext">spell :: Spell
+</span><a href="#local-6989586621679352428"><span class="hs-identifier hs-var">spell</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">[String] -&gt; String
+forall a. Monoid a =&gt; [a] -&gt; a
+</span><span class="hs-identifier hs-var">mconcat</span></span><span> </span><span class="hs-special">[</span><span class="annot"><span class="annottext">Spell -&gt; String
+</span><a href="GameDataTypes.html#spellName"><span class="hs-identifier hs-var hs-var">spellName</span></a></span><span> </span><span class="annot"><span class="annottext">Spell
+</span><a href="#local-6989586621679352428"><span class="hs-identifier hs-var">spell</span></a></span><span>
+</span><span id="line-33"></span><span>                       </span><span class="hs-special">,</span><span class="annot"><span class="hs-string">&quot; (&quot;</span></span><span>
+</span><span id="line-34"></span><span>                       </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">(Int -&gt; String) -&gt; Int -&gt; String
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Spell -&gt; Int
+</span><a href="GameDataTypes.html#spellId"><span class="hs-identifier hs-var hs-var">spellId</span></a></span><span> </span><span class="annot"><span class="annottext">Spell
+</span><a href="#local-6989586621679352428"><span class="hs-identifier hs-var">spell</span></a></span><span>
+</span><span id="line-35"></span><span>                       </span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-string">&quot;)  &quot;</span></span><span>
+</span><span id="line-36"></span><span>                       </span><span class="hs-special">,</span><span class="annot"><span class="hs-string">&quot; - &quot;</span></span><span>
+</span><span id="line-37"></span><span>                       </span><span class="hs-special">,</span><span class="annot"><span class="annottext">Spell -&gt; String
+</span><a href="GameDataTypes.html#spellDesc"><span class="hs-identifier hs-var hs-var">spellDesc</span></a></span><span> </span><span class="annot"><span class="annottext">Spell
+</span><a href="#local-6989586621679352428"><span class="hs-identifier hs-var">spell</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-38"></span><span>
+</span><span id="line-39"></span><span class="hs-comment">-- | Collection of Game Spells for a given Build</span><span>
+</span><span id="line-40"></span><span class="hs-keyword">data</span><span> </span><span id="SpellData"><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier hs-var">SpellData</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span id="SpellData"><span class="annot"><a href="GameDataTypes.html#SpellData"><span class="hs-identifier hs-var">SpellData</span></a></span></span><span> </span><span class="hs-special">{</span><span>
+</span><span id="line-41"></span><span>    </span><span id="build"><span class="annot"><span class="annottext">SpellData -&gt; Build
+</span><a href="GameDataTypes.html#build"><span class="hs-identifier hs-var hs-var">build</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GameDataTypes.html#Build"><span class="hs-identifier hs-type">Build</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>    </span><span id="spells"><span class="annot"><span class="annottext">SpellData -&gt; [Spell]
+</span><a href="GameDataTypes.html#spells"><span class="hs-identifier hs-var hs-var">spells</span></a></span></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="hs-special">[</span><span class="annot"><a href="GameDataTypes.html#Spell"><span class="hs-identifier hs-type">Spell</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-43"></span><span class="hs-special">}</span><span> </span><span class="hs-keyword">deriving</span><span> </span><span class="hs-special">(</span><span id="local-6989586621679352419"><span id="local-6989586621679352421"><span id="local-6989586621679352423"><span class="annot"><span class="annottext">Int -&gt; SpellData -&gt; ShowS
+[SpellData] -&gt; ShowS
+SpellData -&gt; String
+(Int -&gt; SpellData -&gt; ShowS)
+-&gt; (SpellData -&gt; String)
+-&gt; ([SpellData] -&gt; ShowS)
+-&gt; Show SpellData
+forall a.
+(Int -&gt; a -&gt; ShowS) -&gt; (a -&gt; String) -&gt; ([a] -&gt; ShowS) -&gt; Show a
+showList :: [SpellData] -&gt; ShowS
+$cshowList :: [SpellData] -&gt; ShowS
+show :: SpellData -&gt; String
+$cshow :: SpellData -&gt; String
+showsPrec :: Int -&gt; SpellData -&gt; ShowS
+$cshowsPrec :: Int -&gt; SpellData -&gt; ShowS
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var hs-var hs-var">Show</span></span></span></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352415"><span id="local-6989586621679352417"><span class="annot"><span class="annottext">SpellData -&gt; SpellData -&gt; Bool
+(SpellData -&gt; SpellData -&gt; Bool)
+-&gt; (SpellData -&gt; SpellData -&gt; Bool) -&gt; Eq SpellData
+forall a. (a -&gt; a -&gt; Bool) -&gt; (a -&gt; a -&gt; Bool) -&gt; Eq a
+/= :: SpellData -&gt; SpellData -&gt; Bool
+$c/= :: SpellData -&gt; SpellData -&gt; Bool
+== :: SpellData -&gt; SpellData -&gt; Bool
+$c== :: SpellData -&gt; SpellData -&gt; Bool
+</span><span class="hs-identifier hs-var hs-var hs-var hs-var hs-var hs-var">Eq</span></span></span></span><span class="hs-special">)</span><span>
+</span><span id="line-44"></span><span>
+</span><span id="line-45"></span><span class="hs-comment">{- Functions -}</span><span>
+</span><span id="line-46"></span><span>
+</span><span id="line-47"></span><span class="hs-comment">-- | Generate a String representation of a Build</span><span>
+</span><span id="line-48"></span><span class="annot"><a href="GameDataTypes.html#toBuildString"><span class="hs-identifier hs-type">toBuildString</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="GameDataTypes.html#Build"><span class="hs-identifier hs-type">Build</span></a></span><span> </span><span class="hs-comment">-- ^ the build to stringify</span><span>
+</span><span id="line-49"></span><span>              </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span>
+</span><span id="line-50"></span><span id="toBuildString"><span class="annot"><span class="annottext">toBuildString :: Build -&gt; String
+</span><a href="GameDataTypes.html#toBuildString"><span class="hs-identifier hs-var hs-var">toBuildString</span></a></span></span><span> </span><span id="local-6989586621679352414"><span class="annot"><span class="annottext">b :: Build
+</span><a href="#local-6989586621679352414"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-51"></span><span>    </span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#expV"><span class="hs-identifier hs-var hs-var">expV</span></a></span><span> </span><span class="annot"><span class="annottext">Build
+</span><a href="#local-6989586621679352414"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot;.&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#major"><span class="hs-identifier hs-var hs-var">major</span></a></span><span> </span><span class="annot"><span class="annottext">Build
+</span><a href="#local-6989586621679352414"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot;.&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#minor"><span class="hs-identifier hs-var hs-var">minor</span></a></span><span> </span><span class="annot"><span class="annottext">Build
+</span><a href="#local-6989586621679352414"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-52"></span><span>    </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot;.&quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; ShowS
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Build -&gt; Int
+</span><a href="GameDataTypes.html#version"><span class="hs-identifier hs-var hs-var">version</span></a></span><span> </span><span class="annot"><span class="annottext">Build
+</span><a href="#local-6989586621679352414"><span class="hs-identifier hs-var">b</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>
+</span><span id="line-54"></span><span class="hs-comment">-- | Attempts to generate a Build representation of a given buildstring and date.</span><span>
+</span><span id="line-55"></span><span class="annot"><a href="GameDataTypes.html#createBuild"><span class="hs-identifier hs-type">createBuild</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ UTC DateTime string</span><span>
+</span><span id="line-56"></span><span>            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ Build string </span><span>
+</span><span id="line-57"></span><span>            </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Either</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="annot"><a href="GameDataTypes.html#Build"><span class="hs-identifier hs-type">Build</span></a></span><span> </span><span class="hs-comment">-- ^ Right build or Left error</span><span>
+</span><span id="line-58"></span><span id="createBuild"><span class="annot"><span class="annottext">createBuild :: String -&gt; String -&gt; Either String Build
+</span><a href="GameDataTypes.html#createBuild"><span class="hs-identifier hs-var hs-var">createBuild</span></a></span></span><span> </span><span id="local-6989586621679352413"><span class="annot"><span class="annottext">d :: String
+</span><a href="#local-6989586621679352413"><span class="hs-identifier hs-var">d</span></a></span></span><span> </span><span id="local-6989586621679352412"><span class="annot"><span class="annottext">bs :: String
+</span><a href="#local-6989586621679352412"><span class="hs-identifier hs-var">bs</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">String -&gt; Maybe Build
+</span><a href="#local-6989586621679352411"><span class="hs-identifier hs-var">fromBuildString</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352412"><span class="hs-identifier hs-var">bs</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-60"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352410"><span class="annot"><span class="annottext">build :: Build
+</span><a href="#local-6989586621679352410"><span class="hs-identifier hs-var">build</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Build -&gt; Either String Build
+forall a b. b -&gt; Either a b
+</span><span class="hs-identifier hs-var">Right</span></span><span> </span><span class="annot"><span class="annottext">Build
+</span><a href="#local-6989586621679352410"><span class="hs-identifier hs-var">build</span></a></span><span>
+</span><span id="line-61"></span><span>        </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">String -&gt; Either String Build
+forall a b. a -&gt; Either a b
+</span><span class="hs-identifier hs-var">Left</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Invalid Build String supplied&quot;</span></span><span>
+</span><span id="line-62"></span><span>    </span><span class="hs-keyword">where</span><span>
+</span><span id="line-63"></span><span>        </span><span id="local-6989586621679352411"><span class="annot"><span class="annottext">fromBuildString :: String -&gt; Maybe Build
+</span><a href="#local-6989586621679352411"><span class="hs-identifier hs-var hs-var">fromBuildString</span></a></span></span><span> </span><span id="local-6989586621679352409"><span class="annot"><span class="annottext">s :: String
+</span><a href="#local-6989586621679352409"><span class="hs-identifier hs-var">s</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-64"></span><span>            </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">(String -&gt; Maybe Int) -&gt; [String] -&gt; Maybe [Int]
+forall (t :: * -&gt; *) (f :: * -&gt; *) a b.
+(Traversable t, Applicative f) =&gt;
+(a -&gt; f b) -&gt; t a -&gt; f (t b)
+</span><span class="hs-identifier hs-var">traverse</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; Maybe Int
+forall a. Read a =&gt; String -&gt; Maybe a
+</span><span class="hs-identifier hs-var">readMaybe</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String -&gt; String -&gt; [String]
+forall a. Eq a =&gt; [a] -&gt; [a] -&gt; [[a]]
+</span><span class="hs-identifier hs-var">splitOn</span></span><span> </span><span class="annot"><span class="hs-string">&quot;.&quot;</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352409"><span class="hs-identifier hs-var">s</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-65"></span><span>                </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span class="hs-special">[</span><span id="local-6989586621679352407"><span class="annot"><span class="annottext">e :: Int
+</span><a href="#local-6989586621679352407"><span class="hs-identifier hs-var">e</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352406"><span class="annot"><span class="annottext">m :: Int
+</span><a href="#local-6989586621679352406"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352405"><span class="annot"><span class="annottext">n :: Int
+</span><a href="#local-6989586621679352405"><span class="hs-identifier hs-var">n</span></a></span></span><span class="hs-special">,</span><span> </span><span id="local-6989586621679352404"><span class="annot"><span class="annottext">v :: Int
+</span><a href="#local-6989586621679352404"><span class="hs-identifier hs-var">v</span></a></span></span><span class="hs-special">]</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Build -&gt; Maybe Build
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Int -&gt; Int -&gt; String -&gt; Build
+</span><a href="GameDataTypes.html#Build"><span class="hs-identifier hs-var">Build</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679352407"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679352406"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679352405"><span class="hs-identifier hs-var">n</span></a></span><span> </span><span class="annot"><span class="annottext">Int
+</span><a href="#local-6989586621679352404"><span class="hs-identifier hs-var">v</span></a></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679352413"><span class="hs-identifier hs-var">d</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-66"></span><span>                </span><span class="hs-identifier">_</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">Maybe Build
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-67"></span></pre></body></html>

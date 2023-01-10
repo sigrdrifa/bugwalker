@@ -1,0 +1,151 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Functions related to storing and extracting the master JWK to disk</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">JwkStore</span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span>
+</span><span id="line-4"></span><span>      </span><span class="annot"><a href="JwkStore.html#loadJwk"><span class="hs-identifier">loadJwk</span></a></span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-6"></span><span class="hs-comment">---</span><span>
+</span><span id="line-7"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant.Auth.Server</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">generateKey</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-8"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">System.Directory</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">doesFileExist</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-9"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Crypto.JOSE.JWK</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">JWK</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-10"></span><span class="hs-keyword">import</span><span> </span><span class="hs-keyword">qualified</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Lazy</span></span><span> </span><span class="hs-keyword">as</span><span> </span><span class="annot"><span class="hs-identifier">L</span></span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Aeson</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">encode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">decode</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">parseJSON</span></span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Exception</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">catch</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">IOException</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-comment">---</span><span>
+</span><span id="line-14"></span><span>
+</span><span id="line-15"></span><span class="hs-comment">-- | the JWK default path to use</span><span>
+</span><span id="line-16"></span><span class="annot"><a href="JwkStore.html#jwkDefaultPath"><span class="hs-identifier hs-type">jwkDefaultPath</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span>
+</span><span id="line-17"></span><span id="jwkDefaultPath"><span class="annot"><span class="annottext">jwkDefaultPath :: FilePath
+</span><a href="JwkStore.html#jwkDefaultPath"><span class="hs-identifier hs-var hs-var">jwkDefaultPath</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="hs-string">&quot;data/jwk&quot;</span></span><span>
+</span><span id="line-18"></span><span>
+</span><span id="line-19"></span><span class="hs-comment">-- | Attempt to write the encoded JWK to disk</span><span>
+</span><span id="line-20"></span><span class="annot"><a href="JwkStore.html#writeJwkToLocalFile"><span class="hs-identifier hs-type">writeJwkToLocalFile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-comment">-- ^ the location to write to</span><span>
+</span><span id="line-21"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">L.ByteString</span></span><span> </span><span class="hs-comment">-- ^ encoded JWK bytestring</span><span>
+</span><span id="line-22"></span><span>                    </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span> </span><span class="hs-comment">-- ^ IO Success bool indicator</span><span>
+</span><span id="line-23"></span><span id="writeJwkToLocalFile"><span class="annot"><span class="annottext">writeJwkToLocalFile :: FilePath -&gt; ByteString -&gt; IO Bool
+</span><a href="JwkStore.html#writeJwkToLocalFile"><span class="hs-identifier hs-var hs-var">writeJwkToLocalFile</span></a></span></span><span> </span><span id="local-6989586621679352508"><span class="annot"><span class="annottext">f :: FilePath
+</span><a href="#local-6989586621679352508"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span id="local-6989586621679352507"><span class="annot"><span class="annottext">jwk :: ByteString
+</span><a href="#local-6989586621679352507"><span class="hs-identifier hs-var">jwk</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-24"></span><span>    </span><span id="local-6989586621679352506"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679352506"><span class="hs-identifier hs-var">shouldWrite</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO Bool
+</span><span class="hs-identifier hs-var">doesFileExist</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679352508"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-25"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679352506"><span class="hs-identifier hs-var">shouldWrite</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; IO Bool
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="hs-special">(</span><span class="hs-keyword">do</span><span>
+</span><span id="line-26"></span><span>      </span><span class="annot"><span class="annottext">FilePath -&gt; ByteString -&gt; IO ()
+</span><span class="hs-identifier hs-var">L.writeFile</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679352508"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679352507"><span class="hs-identifier hs-var">jwk</span></a></span><span>
+</span><span id="line-27"></span><span>      </span><span class="annot"><span class="annottext">Bool -&gt; IO Bool
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">)</span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- | Attempt to read a stored JWK from disk</span><span>
+</span><span id="line-30"></span><span class="annot"><a href="JwkStore.html#readJwkFromLocalFile"><span class="hs-identifier hs-type">readJwkFromLocalFile</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-comment">-- ^ the location to read from</span><span>
+</span><span id="line-31"></span><span>                     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Maybe</span></span><span> </span><span class="annot"><span class="hs-identifier hs-type">L.ByteString</span></span><span class="hs-special">)</span><span>
+</span><span id="line-32"></span><span id="readJwkFromLocalFile"><span class="annot"><span class="annottext">readJwkFromLocalFile :: FilePath -&gt; IO (Maybe ByteString)
+</span><a href="JwkStore.html#readJwkFromLocalFile"><span class="hs-identifier hs-var hs-var">readJwkFromLocalFile</span></a></span></span><span> </span><span id="local-6989586621679352503"><span class="annot"><span class="annottext">f :: FilePath
+</span><a href="#local-6989586621679352503"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-33"></span><span>    </span><span id="local-6989586621679352502"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679352502"><span class="hs-identifier hs-var">exists</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO Bool
+</span><span class="hs-identifier hs-var">doesFileExist</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679352503"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-34"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679352502"><span class="hs-identifier hs-var">exists</span></a></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="hs-special">(</span><span class="hs-keyword">do</span><span>
+</span><span id="line-35"></span><span>      </span><span id="local-6989586621679352501"><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679352501"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO ByteString -&gt; (IOException -&gt; IO ByteString) -&gt; IO ByteString
+forall e a. Exception e =&gt; IO a -&gt; (e -&gt; IO a) -&gt; IO a
+</span><span class="hs-identifier hs-var">catch</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">FilePath -&gt; IO ByteString
+</span><span class="hs-identifier hs-var">L.readFile</span></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679352503"><span class="hs-identifier hs-var">f</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="hs-glyph">\</span><span id="local-6989586621679352499"><span class="annot"><span class="annottext">e :: IOException
+</span><a href="#local-6989586621679352499"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-36"></span><span>        </span><span class="annot"><span class="annottext">FilePath -&gt; IO ()
+</span><span class="hs-identifier hs-var">putStrLn</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Failed to read JWTTokenFile&quot;</span></span><span>
+</span><span id="line-37"></span><span>        </span><span class="annot"><span class="annottext">IOException -&gt; IO ()
+forall a. Show a =&gt; a -&gt; IO ()
+</span><span class="hs-identifier hs-var">print</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">IOException
+</span><a href="#local-6989586621679352499"><span class="hs-identifier hs-var">e</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IOException</span></span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span>        </span><span class="annot"><span class="annottext">ByteString -&gt; IO ByteString
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><span class="hs-identifier hs-var">L.empty</span></span><span class="hs-special">)</span><span>
+</span><span id="line-39"></span><span>      </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679352501"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; ByteString -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">/=</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><span class="hs-identifier hs-var">L.empty</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="annot"><span class="annottext">Maybe ByteString -&gt; IO (Maybe ByteString)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(Maybe ByteString -&gt; IO (Maybe ByteString))
+-&gt; Maybe ByteString -&gt; IO (Maybe ByteString)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Maybe ByteString
+forall a. a -&gt; Maybe a
+</span><span class="hs-identifier hs-var">Just</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679352501"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe ByteString -&gt; IO (Maybe ByteString)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe ByteString
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">else</span><span> </span><span class="annot"><span class="annottext">Maybe ByteString -&gt; IO (Maybe ByteString)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">Maybe ByteString
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-40"></span><span>
+</span><span id="line-41"></span><span class="hs-comment">-- | Attempts to either load an existing JWK from store (disk)</span><span>
+</span><span id="line-42"></span><span class="hs-comment">-- or generates a new JWK and returns it in a tuple with the</span><span>
+</span><span id="line-43"></span><span class="hs-comment">-- first bool indicating whether or not it was read or generated </span><span>
+</span><span id="line-44"></span><span class="annot"><a href="JwkStore.html#loadJwk"><span class="hs-identifier hs-type">loadJwk</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">FilePath</span></span><span> </span><span class="hs-comment">-- ^ the location to read/write from/to</span><span>
+</span><span id="line-45"></span><span>        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">IO</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Bool</span></span><span class="hs-special">,</span><span class="annot"><span class="hs-identifier hs-type">JWK</span></span><span class="hs-special">)</span><span> </span><span class="hs-comment">-- ^ (Did read from disk, the JWK)</span><span>
+</span><span id="line-46"></span><span id="loadJwk"><span class="annot"><span class="annottext">loadJwk :: FilePath -&gt; IO (Bool, JWK)
+</span><a href="JwkStore.html#loadJwk"><span class="hs-identifier hs-var hs-var">loadJwk</span></a></span></span><span> </span><span id="local-6989586621679352495"><span class="annot"><span class="annottext">f :: FilePath
+</span><a href="#local-6989586621679352495"><span class="hs-identifier hs-var">f</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-47"></span><span>  </span><span id="local-6989586621679352494"><span class="annot"><span class="annottext">Maybe ByteString
+</span><a href="#local-6989586621679352494"><span class="hs-identifier hs-var">lKey</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; IO (Maybe ByteString)
+</span><a href="JwkStore.html#readJwkFromLocalFile"><span class="hs-identifier hs-var">readJwkFromLocalFile</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679352495"><span class="hs-identifier hs-var">f</span></a></span><span>
+</span><span id="line-48"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe ByteString
+</span><a href="#local-6989586621679352494"><span class="hs-identifier hs-var">lKey</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-49"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352493"><span class="annot"><span class="annottext">jwk :: ByteString
+</span><a href="#local-6989586621679352493"><span class="hs-identifier hs-var">jwk</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-50"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679352492"><span class="annot"><span class="annottext">result :: Maybe JWK
+</span><a href="#local-6989586621679352492"><span class="hs-identifier hs-var hs-var">result</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">ByteString -&gt; Maybe JWK
+forall a. FromJSON a =&gt; ByteString -&gt; Maybe a
+</span><span class="hs-identifier hs-var">decode</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679352493"><span class="hs-identifier hs-var">jwk</span></a></span><span>
+</span><span id="line-51"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Maybe JWK
+</span><a href="#local-6989586621679352492"><span class="hs-identifier hs-var">result</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-52"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Just</span></span><span> </span><span id="local-6989586621679352491"><span class="annot"><span class="annottext">k :: JWK
+</span><a href="#local-6989586621679352491"><span class="hs-identifier hs-var">k</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">(Bool, JWK) -&gt; IO (Bool, JWK)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">True</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">JWK
+</span><a href="#local-6989586621679352491"><span class="hs-identifier hs-var">k</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-53"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO (Bool, JWK)
+</span><a href="#local-6989586621679352490"><span class="hs-identifier hs-var">writeNewJwk</span></a></span><span>
+</span><span id="line-54"></span><span>    </span><span class="annot"><span class="hs-identifier hs-type">Nothing</span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">IO (Bool, JWK)
+</span><a href="#local-6989586621679352490"><span class="hs-identifier hs-var">writeNewJwk</span></a></span><span>
+</span><span id="line-55"></span><span>  </span><span class="hs-keyword">where</span><span>
+</span><span id="line-56"></span><span>    </span><span id="local-6989586621679352490"><span class="annot"><span class="annottext">writeNewJwk :: IO (Bool, JWK)
+</span><a href="#local-6989586621679352490"><span class="hs-identifier hs-var hs-var">writeNewJwk</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-57"></span><span>      </span><span id="local-6989586621679352489"><span class="annot"><span class="annottext">JWK
+</span><a href="#local-6989586621679352489"><span class="hs-identifier hs-var">newKey</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO JWK
+</span><span class="hs-identifier hs-var">generateKey</span></span><span>
+</span><span id="line-58"></span><span>      </span><span class="hs-keyword">let</span><span> </span><span id="local-6989586621679352488"><span class="annot"><span class="annottext">wKey :: ByteString
+</span><a href="#local-6989586621679352488"><span class="hs-identifier hs-var hs-var">wKey</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">JWK -&gt; ByteString
+forall a. ToJSON a =&gt; a -&gt; ByteString
+</span><span class="hs-identifier hs-var">encode</span></span><span> </span><span class="annot"><span class="annottext">JWK
+</span><a href="#local-6989586621679352489"><span class="hs-identifier hs-var">newKey</span></a></span><span>
+</span><span id="line-59"></span><span>      </span><span id="local-6989586621679352487"><span class="annot"><span class="annottext">Bool
+</span><a href="#local-6989586621679352487"><span class="hs-identifier hs-var">b</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">FilePath -&gt; ByteString -&gt; IO Bool
+</span><a href="JwkStore.html#writeJwkToLocalFile"><span class="hs-identifier hs-var">writeJwkToLocalFile</span></a></span><span> </span><span class="annot"><span class="annottext">FilePath
+</span><a href="#local-6989586621679352495"><span class="hs-identifier hs-var">f</span></a></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679352488"><span class="hs-identifier hs-var">wKey</span></a></span><span>
+</span><span id="line-60"></span><span>      </span><span class="annot"><span class="annottext">(Bool, JWK) -&gt; IO (Bool, JWK)
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span class="hs-special">,</span><span class="annot"><span class="annottext">JWK
+</span><a href="#local-6989586621679352489"><span class="hs-identifier hs-var">newKey</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-61"></span></pre></body></html>

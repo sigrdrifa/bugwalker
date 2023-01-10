@@ -1,0 +1,77 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-pragma">{-# LANGUAGE OverloadedStrings #-}</span><span>
+</span><span id="line-2"></span><span>
+</span><span id="line-3"></span><span class="hs-comment">-- | Handlers related to GameData Asset API endpoints</span><span>
+</span><span id="line-4"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">AssetApi</span><span>
+</span><span id="line-5"></span><span>    </span><span class="hs-special">(</span><span>
+</span><span id="line-6"></span><span>        </span><span class="annot"><a href="AssetApi.html#listBuildsHandler"><span class="hs-identifier">listBuildsHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>        </span><span class="annot"><a href="AssetApi.html#listSpellsHandler"><span class="hs-identifier">listSpellsHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>        </span><span class="annot"><a href="AssetApi.html#iohInitHandler"><span class="hs-identifier">iohInitHandler</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span class="hs-comment">---</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Handler</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-12"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftIO</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-13"></span><span class="hs-comment">---</span><span>
+</span><span id="line-14"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ApiTypes.html"><span class="hs-identifier">ApiTypes</span></a></span><span>
+</span><span id="line-15"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ApiTypes.html#BuildT"><span class="hs-identifier">BuildT</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span class="hs-special">(</span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier">ResponseMessage</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span> </span><span class="annot"><a href="ApiTypes.html#SpellT"><span class="hs-identifier">SpellT</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-16"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="IOH.html"><span class="hs-identifier">IOH</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="IOH.html#getBuilds"><span class="hs-identifier">getBuilds</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="IOH.html#getSpells"><span class="hs-identifier">getSpells</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-17"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AuthTypes.html"><span class="hs-identifier">AuthTypes</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier">AuthenticatedUser</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#auRole"><span class="hs-identifier">auRole</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-18"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="GameData.html"><span class="hs-identifier">GameData</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="GameData.html#runGameDataUpdate"><span class="hs-identifier">runGameDataUpdate</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-comment">---</span><span>
+</span><span id="line-20"></span><span>
+</span><span id="line-21"></span><span class="hs-comment">-- | Handles listing builds</span><span>
+</span><span id="line-22"></span><span class="annot"><a href="AssetApi.html#listBuildsHandler"><span class="hs-identifier hs-type">listBuildsHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#BuildT"><span class="hs-identifier hs-type">BuildT</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-23"></span><span id="listBuildsHandler"><span class="annot"><span class="annottext">listBuildsHandler :: Handler [BuildT]
+</span><a href="AssetApi.html#listBuildsHandler"><span class="hs-identifier hs-var hs-var">listBuildsHandler</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO [BuildT] -&gt; Handler [BuildT]
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">IO [BuildT]
+</span><a href="IOH.html#getBuilds"><span class="hs-identifier hs-var">IOH.getBuilds</span></a></span><span>
+</span><span id="line-24"></span><span>
+</span><span id="line-25"></span><span class="hs-comment">-- | Handles listing spells</span><span>
+</span><span id="line-26"></span><span class="annot"><a href="AssetApi.html#listSpellsHandler"><span class="hs-identifier hs-type">listSpellsHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="ApiTypes.html#SpellT"><span class="hs-identifier hs-type">SpellT</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-27"></span><span id="listSpellsHandler"><span class="annot"><span class="annottext">listSpellsHandler :: Handler [SpellT]
+</span><a href="AssetApi.html#listSpellsHandler"><span class="hs-identifier hs-var hs-var">listSpellsHandler</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO [SpellT] -&gt; Handler [SpellT]
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">IO [SpellT]
+</span><a href="IOH.html#getSpells"><span class="hs-identifier hs-var">IOH.getSpells</span></a></span><span>
+</span><span id="line-28"></span><span>
+</span><span id="line-29"></span><span class="hs-comment">-- | (Mod Only) Handles a request to run a full GameData update</span><span>
+</span><span id="line-30"></span><span class="annot"><a href="AssetApi.html#iohInitHandler"><span class="hs-identifier hs-type">iohInitHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-comment">-- ^ the requesting user</span><span>
+</span><span id="line-31"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">String</span></span><span> </span><span class="hs-comment">-- ^ the source to update from (local or anything else)</span><span>
+</span><span id="line-32"></span><span>               </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-type">ResponseMessage</span></a></span><span>
+</span><span id="line-33"></span><span id="iohInitHandler"><span class="annot"><span class="annottext">iohInitHandler :: AuthenticatedUser -&gt; String -&gt; Handler ResponseMessage
+</span><a href="AssetApi.html#iohInitHandler"><span class="hs-identifier hs-var hs-var">iohInitHandler</span></a></span></span><span> </span><span id="local-6989586621679353525"><span class="annot"><span class="annottext">au :: AuthenticatedUser
+</span><a href="#local-6989586621679353525"><span class="hs-identifier hs-var">au</span></a></span></span><span> </span><span id="local-6989586621679353524"><span class="annot"><span class="annottext">src :: String
+</span><a href="#local-6989586621679353524"><span class="hs-identifier hs-var">src</span></a></span></span><span> </span><span class="hs-glyph">=</span><span>
+</span><span id="line-34"></span><span>  </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int
+</span><a href="AuthTypes.html#auRole"><span class="hs-identifier hs-var hs-var">auRole</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353525"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int -&gt; Bool
+forall a. Ord a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">&gt;</span></span><span> </span><span class="annot"><span class="hs-number">3</span></span><span> </span><span class="hs-keyword">then</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-35"></span><span>    </span><span class="annot"><span class="annottext">IO () -&gt; Handler ()
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO () -&gt; Handler ()) -&gt; IO () -&gt; Handler ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool -&gt; IO ()
+</span><a href="GameData.html#runGameDataUpdate"><span class="hs-identifier hs-var">GameData.runGameDataUpdate</span></a></span><span> </span><span class="annot"><span class="annottext">Bool
+</span><span class="hs-identifier hs-var">False</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; IO ()) -&gt; Bool -&gt; IO ()
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353524"><span class="hs-identifier hs-var">src</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; Bool
+forall a. Eq a =&gt; a -&gt; a -&gt; Bool
+</span><span class="hs-operator hs-var">==</span></span><span> </span><span class="annot"><span class="hs-string">&quot;local&quot;</span></span><span>
+</span><span id="line-36"></span><span>    </span><span class="annot"><span class="annottext">ResponseMessage -&gt; Handler ResponseMessage
+forall (m :: * -&gt; *) a. Monad m =&gt; a -&gt; m a
+</span><span class="hs-identifier hs-var">return</span></span><span> </span><span class="annot"><span class="annottext">(ResponseMessage -&gt; Handler ResponseMessage)
+-&gt; ResponseMessage -&gt; Handler ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String -&gt; ResponseMessage
+</span><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-var">ResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">200</span></span><span> </span><span class="annot"><span class="hs-string">&quot;OK&quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;IOH GameData init completed&quot;</span></span><span>
+</span><span id="line-37"></span><span>  </span><span class="hs-keyword">else</span><span>
+</span><span id="line-38"></span><span>    </span><span class="annot"><span class="annottext">ResponseMessage -&gt; Handler ResponseMessage
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(ResponseMessage -&gt; Handler ResponseMessage)
+-&gt; ResponseMessage -&gt; Handler ResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String -&gt; ResponseMessage
+</span><a href="ApiTypes.html#ResponseMessage"><span class="hs-identifier hs-var">ResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">201</span></span><span> </span><span class="annot"><span class="hs-string">&quot;NoAuth&quot;</span></span><span> </span><span class="annot"><span class="hs-string">&quot;You are not authorised to do this.&quot;</span></span><span>
+</span><span id="line-39"></span></pre></body></html>

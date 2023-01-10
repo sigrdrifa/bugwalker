@@ -1,0 +1,345 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd"><html xmlns="http://www.w3.org/1999/xhtml"><head><link rel="stylesheet" type="text/css" href="style.css" /><script type="text/javascript" src="highlight.js"></script></head><body><pre><span class="hs-comment">-- | Handlers related to User API endpoints</span><span>
+</span><span id="line-2"></span><span class="hs-keyword">module</span><span> </span><span class="hs-identifier">UserApi</span><span>
+</span><span id="line-3"></span><span>    </span><span class="hs-special">(</span><span>
+</span><span id="line-4"></span><span>      </span><span class="annot"><a href="UserApi.html#userRegistrationHandler"><span class="hs-identifier">userRegistrationHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-5"></span><span>      </span><span class="annot"><a href="UserApi.html#userLoginHandler"><span class="hs-identifier">userLoginHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-6"></span><span>      </span><span class="annot"><a href="UserApi.html#getUsersHandler"><span class="hs-identifier">getUsersHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-7"></span><span>      </span><span class="annot"><a href="UserApi.html#getUserPHandler"><span class="hs-identifier">getUserPHandler</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-8"></span><span>      </span><span class="annot"><a href="UserApi.html#changeUserRoleHandler"><span class="hs-identifier">changeUserRoleHandler</span></a></span><span>
+</span><span id="line-9"></span><span>    </span><span class="hs-special">)</span><span> </span><span class="hs-keyword">where</span><span>
+</span><span id="line-10"></span><span class="hs-comment">---</span><span>
+</span><span id="line-11"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant</span></span><span>
+</span><span id="line-12"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">throwError</span></span><span class="hs-special">,</span><span>
+</span><span id="line-13"></span><span>      </span><span class="annot"><span class="hs-identifier">Handler</span></span><span class="hs-special">,</span><span>
+</span><span id="line-14"></span><span>      </span><span class="annot"><span class="hs-identifier">err400</span></span><span class="hs-special">,</span><span>
+</span><span id="line-15"></span><span>      </span><span class="annot"><span class="hs-identifier">err401</span></span><span class="hs-special">,</span><span>
+</span><span id="line-16"></span><span>      </span><span class="annot"><span class="hs-identifier">err404</span></span><span class="hs-special">,</span><span>
+</span><span id="line-17"></span><span>      </span><span class="annot"><span class="hs-identifier">err500</span></span><span class="hs-special">,</span><span>
+</span><span id="line-18"></span><span>      </span><span class="annot"><span class="hs-identifier">ServerError</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">errBody</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-19"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Servant.Auth.Server</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">makeJWT</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">JWTSettings</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-20"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Control.Monad.IO.Class</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">MonadIO</span></span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">liftIO</span></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-21"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">pack</span></span><span class="hs-special">)</span><span>
+</span><span id="line-22"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.ByteString.Lazy.Internal</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier">packChars</span></span><span class="hs-special">,</span><span> </span><span class="annot"><span class="hs-identifier">unpackChars</span></span><span class="hs-special">)</span><span>
+</span><span id="line-23"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Int</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">Int64</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-24"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><span class="hs-identifier">Data.Char</span></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><span class="hs-identifier">toLower</span></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-25"></span><span class="hs-comment">---</span><span>
+</span><span id="line-26"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AuthTypes.html"><span class="hs-identifier">AuthTypes</span></a></span><span>
+</span><span id="line-27"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="AuthTypes.html#isUserMod"><span class="hs-identifier">isUserMod</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-28"></span><span>      </span><span class="annot"><a href="AuthTypes.html#AuthResultT"><span class="hs-identifier">AuthResultT</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#AuthFailed"><span class="hs-identifier">AuthFailed</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthOK"><span class="hs-identifier">AuthOK</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-29"></span><span>      </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier">AuthenticatedUser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-30"></span><span>      </span><span class="annot"><a href="AuthTypes.html#User"><span class="hs-identifier">User</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#userUuid"><span class="hs-identifier">userUuid</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-31"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserChangeRoleData"><span class="hs-identifier">UserChangeRoleData</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#ucrRole"><span class="hs-identifier">ucrRole</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#ucrId"><span class="hs-identifier">ucrId</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-32"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserL"><span class="hs-identifier">UserL</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#userLName"><span class="hs-identifier">userLName</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userLRole"><span class="hs-identifier">userLRole</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userLCreatedTime"><span class="hs-identifier">userLCreatedTime</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#userLLastLogin"><span class="hs-identifier">userLLastLogin</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-33"></span><span>            </span><span class="annot"><a href="AuthTypes.html#userLAvatar"><span class="hs-identifier">userLAvatar</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-34"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserLoginData"><span class="hs-identifier">UserLoginData</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#uldName"><span class="hs-identifier">uldName</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthTypes.html#uldPass"><span class="hs-identifier">uldPass</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-35"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier">UserP</span></a></span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier">UserP</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-36"></span><span>      </span><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier">UserRegistration</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-37"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="AuthHandler.html"><span class="hs-identifier">AuthHandler</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="AuthHandler.html#createUser"><span class="hs-identifier">createUser</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="AuthHandler.html#tryAuthenticate"><span class="hs-identifier">tryAuthenticate</span></a></span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-38"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="IOH.html"><span class="hs-identifier">IOH</span></a></span><span>
+</span><span id="line-39"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="IOH.html#changeUserRole"><span class="hs-identifier">changeUserRole</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-40"></span><span>      </span><span class="annot"><a href="IOH.html#getBugsByUser"><span class="hs-identifier">getBugsByUser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-41"></span><span>      </span><span class="annot"><a href="IOH.html#getUserByName"><span class="hs-identifier">getUserByName</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-42"></span><span>      </span><span class="annot"><a href="IOH.html#getUserL"><span class="hs-identifier">getUserL</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-43"></span><span>      </span><span class="annot"><a href="IOH.html#getUsers"><span class="hs-identifier">getUsers</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-44"></span><span>      </span><span class="annot"><a href="IOH.html#storeUser"><span class="hs-identifier">storeUser</span></a></span><span class="hs-special">,</span><span>
+</span><span id="line-45"></span><span>      </span><span class="annot"><a href="IOH.html#IOHError"><span class="hs-identifier">IOHError</span></a></span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHAuthError"><span class="hs-identifier">IOHAuthError</span></a></span><span class="hs-special">,</span><span> </span><span class="annot"><a href="IOH.html#IOHFetchError"><span class="hs-identifier">IOHFetchError</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-46"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="ApiTypes.html"><span class="hs-identifier">ApiTypes</span></a></span><span>
+</span><span id="line-47"></span><span>    </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier">LoginResponseMessage</span></a></span><span class="hs-special">(</span><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier">LoginResponseMessage</span></a></span><span class="hs-special">)</span><span class="hs-special">,</span><span>
+</span><span id="line-48"></span><span>      </span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier">UserChangedResponseMessage</span></a></span><span class="hs-special">(</span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier">UserChangedResponseMessage</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-49"></span><span class="hs-keyword">import</span><span> </span><span class="annot"><a href="Utils.html"><span class="hs-identifier">Utils</span></a></span><span> </span><span class="hs-special">(</span><span> </span><span class="annot"><a href="Utils.html#ApiError"><span class="hs-identifier">ApiError</span></a></span><span class="hs-special">(</span><span class="annot"><a href="Utils.html#ValidationError"><span class="hs-identifier">ValidationError</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">)</span><span>
+</span><span id="line-50"></span><span class="hs-comment">----</span><span>
+</span><span id="line-51"></span><span>
+</span><span id="line-52"></span><span class="hs-comment">-- | Handles user registration requests by asking the AuthHandler to create</span><span>
+</span><span id="line-53"></span><span class="hs-comment">-- the user and then asks the IOH to store the new user </span><span>
+</span><span id="line-54"></span><span class="annot"><a href="UserApi.html#userRegistrationHandler"><span class="hs-identifier hs-type">userRegistrationHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#UserRegistration"><span class="hs-identifier hs-type">UserRegistration</span></a></span><span> </span><span class="hs-comment">-- ^ UserRegistration object to store</span><span>
+</span><span id="line-55"></span><span>                        </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-type">UserChangedResponseMessage</span></a></span><span>
+</span><span id="line-56"></span><span id="userRegistrationHandler"><span class="annot"><span class="annottext">userRegistrationHandler :: UserRegistration -&gt; Handler UserChangedResponseMessage
+</span><a href="UserApi.html#userRegistrationHandler"><span class="hs-identifier hs-var hs-var">userRegistrationHandler</span></a></span></span><span> </span><span id="local-6989586621679353729"><span class="annot"><span class="annottext">ur :: UserRegistration
+</span><a href="#local-6989586621679353729"><span class="hs-identifier hs-var">ur</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-57"></span><span>  </span><span id="local-6989586621679353728"><span class="annot"><span class="annottext">Either ApiError User
+</span><a href="#local-6989586621679353728"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either ApiError User) -&gt; Handler (Either ApiError User)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either ApiError User) -&gt; Handler (Either ApiError User))
+-&gt; IO (Either ApiError User) -&gt; Handler (Either ApiError User)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">UserRegistration -&gt; Int -&gt; IO (Either ApiError User)
+forall (m :: * -&gt; *).
+(UserPrinter m, UUIDGenerator m) =&gt;
+UserRegistration -&gt; Int -&gt; m (Either ApiError User)
+</span><a href="AuthHandler.html#createUser"><span class="hs-identifier hs-var">AuthHandler.createUser</span></a></span><span> </span><span class="annot"><span class="annottext">UserRegistration
+</span><a href="#local-6989586621679353729"><span class="hs-identifier hs-var">ur</span></a></span><span> </span><span class="annot"><span class="hs-number">1</span></span><span>
+</span><span id="line-58"></span><span>  </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either ApiError User
+</span><a href="#local-6989586621679353728"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-59"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353727"><span class="annot"><span class="annottext">user :: User
+</span><a href="#local-6989586621679353727"><span class="hs-identifier hs-var">user</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-60"></span><span>      </span><span id="local-6989586621679353726"><span class="annot"><span class="annottext">Either IOHError Int64
+</span><a href="#local-6989586621679353726"><span class="hs-identifier hs-var">dbRes</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64))
+-&gt; IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">User -&gt; IO (Either IOHError Int64)
+</span><a href="IOH.html#storeUser"><span class="hs-identifier hs-var">IOH.storeUser</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353727"><span class="hs-identifier hs-var">user</span></a></span><span>
+</span><span id="line-61"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either IOHError Int64
+</span><a href="#local-6989586621679353726"><span class="hs-identifier hs-var">dbRes</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-62"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353725"><span class="annot"><span class="annottext">uId :: Int64
+</span><a href="#local-6989586621679353725"><span class="hs-identifier hs-var">uId</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">UserChangedResponseMessage -&gt; Handler UserChangedResponseMessage
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(UserChangedResponseMessage -&gt; Handler UserChangedResponseMessage)
+-&gt; UserChangedResponseMessage -&gt; Handler UserChangedResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int64 -&gt; String -&gt; String -&gt; UserChangedResponseMessage
+</span><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-var">UserChangedResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">200</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353725"><span class="hs-identifier hs-var">uId</span></a></span><span> </span><span class="annot"><span class="hs-string">&quot;OK&quot;</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; UserChangedResponseMessage)
+-&gt; String -&gt; UserChangedResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-63"></span><span>                       </span><span class="annot"><span class="hs-string">&quot;Created user with UUID &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">UUID -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">User -&gt; UUID
+</span><a href="AuthTypes.html#userUuid"><span class="hs-identifier hs-var hs-var">userUuid</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353727"><span class="hs-identifier hs-var">user</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-64"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-identifier">_</span><span class="hs-special">)</span><span>       </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler UserChangedResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err500</span></span><span>
+</span><span id="line-65"></span><span>    </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="Utils.html#ValidationError"><span class="hs-identifier hs-type">ValidationError</span></a></span><span> </span><span id="local-6989586621679353723"><span class="annot"><span class="annottext">field :: String
+</span><a href="#local-6989586621679353723"><span class="hs-identifier hs-var">field</span></a></span></span><span> </span><span id="local-6989586621679353722"><span class="annot"><span class="annottext">msg :: String
+</span><a href="#local-6989586621679353722"><span class="hs-identifier hs-var">msg</span></a></span></span><span class="hs-special">)</span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-66"></span><span>      </span><span class="annot"><span class="annottext">ServerError -&gt; Handler UserChangedResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err400</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353723"><span class="hs-identifier hs-var">field</span></a></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="hs-string">&quot; | &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353722"><span class="hs-identifier hs-var">msg</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-67"></span><span>
+</span><span id="line-68"></span><span class="hs-comment">-- | Handles user login by getting the User object from the IOH</span><span>
+</span><span id="line-69"></span><span class="hs-comment">-- and asking the AuthHandler to authenticate. Creates a JWT token on success</span><span>
+</span><span id="line-70"></span><span class="annot"><a href="UserApi.html#userLoginHandler"><span class="hs-identifier hs-type">userLoginHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">JWTSettings</span></span><span> </span><span class="hs-comment">-- ^ the JWTSettings </span><span>
+</span><span id="line-71"></span><span>                 </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AuthTypes.html#UserLoginData"><span class="hs-identifier hs-type">UserLoginData</span></a></span><span> </span><span class="hs-comment">-- ^ the UserLoginData object</span><span>
+</span><span id="line-72"></span><span>                 </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier hs-type">LoginResponseMessage</span></a></span><span>
+</span><span id="line-73"></span><span id="userLoginHandler"><span class="annot"><span class="annottext">userLoginHandler :: JWTSettings -&gt; UserLoginData -&gt; Handler LoginResponseMessage
+</span><a href="UserApi.html#userLoginHandler"><span class="hs-identifier hs-var hs-var">userLoginHandler</span></a></span></span><span> </span><span id="local-6989586621679353721"><span class="annot"><span class="annottext">jwts :: JWTSettings
+</span><a href="#local-6989586621679353721"><span class="hs-identifier hs-var">jwts</span></a></span></span><span> </span><span id="local-6989586621679353720"><span class="annot"><span class="annottext">uld :: UserLoginData
+</span><a href="#local-6989586621679353720"><span class="hs-identifier hs-var">uld</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-74"></span><span>    </span><span id="local-6989586621679353719"><span class="annot"><span class="annottext">Either IOHError User
+</span><a href="#local-6989586621679353719"><span class="hs-identifier hs-var">r</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either IOHError User) -&gt; Handler (Either IOHError User)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOHError User) -&gt; Handler (Either IOHError User))
+-&gt; IO (Either IOHError User) -&gt; Handler (Either IOHError User)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; IO (Either IOHError User)
+</span><a href="IOH.html#getUserByName"><span class="hs-identifier hs-var">IOH.getUserByName</span></a></span><span> </span><span class="annot"><span class="annottext">(String -&gt; IO (Either IOHError User))
+-&gt; String -&gt; IO (Either IOHError User)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">(Char -&gt; Char) -&gt; String -&gt; String
+forall a b. (a -&gt; b) -&gt; [a] -&gt; [b]
+</span><span class="hs-identifier hs-var">map</span></span><span> </span><span class="annot"><span class="annottext">Char -&gt; Char
+</span><span class="hs-identifier hs-var">toLower</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserLoginData -&gt; String
+</span><a href="AuthTypes.html#uldName"><span class="hs-identifier hs-var hs-var">uldName</span></a></span><span> </span><span class="annot"><span class="annottext">UserLoginData
+</span><a href="#local-6989586621679353720"><span class="hs-identifier hs-var">uld</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-75"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either IOHError User
+</span><a href="#local-6989586621679353719"><span class="hs-identifier hs-var">r</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-76"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353718"><span class="annot"><span class="annottext">user :: User
+</span><a href="#local-6989586621679353718"><span class="hs-identifier hs-var">user</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span>
+</span><span id="line-77"></span><span>            </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">User -&gt; String -&gt; AuthResultT
+</span><a href="AuthHandler.html#tryAuthenticate"><span class="hs-identifier hs-var">AuthHandler.tryAuthenticate</span></a></span><span> </span><span class="annot"><span class="annottext">User
+</span><a href="#local-6989586621679353718"><span class="hs-identifier hs-var">user</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserLoginData -&gt; String
+</span><a href="AuthTypes.html#uldPass"><span class="hs-identifier hs-var hs-var">uldPass</span></a></span><span> </span><span class="annot"><span class="annottext">UserLoginData
+</span><a href="#local-6989586621679353720"><span class="hs-identifier hs-var">uld</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-78"></span><span>                </span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#AuthOK"><span class="hs-identifier hs-type">AuthOK</span></a></span><span> </span><span id="local-6989586621679353717"><span class="annot"><span class="annottext">token :: String
+</span><a href="#local-6989586621679353717"><span class="hs-identifier hs-var">token</span></a></span></span><span> </span><span id="local-6989586621679353716"><span class="annot"><span class="annottext">uA :: AuthenticatedUser
+</span><a href="#local-6989586621679353716"><span class="hs-identifier hs-var">uA</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-79"></span><span>                    </span><span id="local-6989586621679353715"><span class="annot"><span class="annottext">Either Error ByteString
+</span><a href="#local-6989586621679353715"><span class="hs-identifier hs-var">etoken</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either Error ByteString) -&gt; Handler (Either Error ByteString)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either Error ByteString) -&gt; Handler (Either Error ByteString))
+-&gt; IO (Either Error ByteString)
+-&gt; Handler (Either Error ByteString)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+-&gt; JWTSettings -&gt; Maybe UTCTime -&gt; IO (Either Error ByteString)
+forall a.
+ToJWT a =&gt;
+a -&gt; JWTSettings -&gt; Maybe UTCTime -&gt; IO (Either Error ByteString)
+</span><span class="hs-identifier hs-var">makeJWT</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353716"><span class="hs-identifier hs-var">uA</span></a></span><span> </span><span class="annot"><span class="annottext">JWTSettings
+</span><a href="#local-6989586621679353721"><span class="hs-identifier hs-var">jwts</span></a></span><span> </span><span class="annot"><span class="annottext">Maybe UTCTime
+forall a. Maybe a
+</span><span class="hs-identifier hs-var">Nothing</span></span><span>
+</span><span id="line-80"></span><span>                    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either Error ByteString
+</span><a href="#local-6989586621679353715"><span class="hs-identifier hs-var">etoken</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-81"></span><span>                        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span id="local-6989586621679353714"><span class="annot"><span class="annottext">e :: Error
+</span><a href="#local-6989586621679353714"><span class="hs-identifier hs-var">e</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler LoginResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err500</span></span><span>
+</span><span id="line-82"></span><span>                        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353713"><span class="annot"><span class="annottext">v :: ByteString
+</span><a href="#local-6989586621679353713"><span class="hs-identifier hs-var">v</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">LoginResponseMessage -&gt; Handler LoginResponseMessage
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(LoginResponseMessage -&gt; Handler LoginResponseMessage)
+-&gt; LoginResponseMessage -&gt; Handler LoginResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; String -&gt; String -&gt; LoginResponseMessage
+</span><a href="ApiTypes.html#LoginResponseMessage"><span class="hs-identifier hs-var">LoginResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">200</span></span><span> </span><span class="annot"><span class="hs-string">&quot;OK&quot;</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">ByteString -&gt; String
+</span><span class="hs-identifier hs-var">unpackChars</span></span><span> </span><span class="annot"><span class="annottext">ByteString
+</span><a href="#local-6989586621679353713"><span class="hs-identifier hs-var">v</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-83"></span><span>                </span><span class="hs-special">(</span><span class="annot"><a href="AuthTypes.html#AuthFailed"><span class="hs-identifier hs-type">AuthFailed</span></a></span><span> </span><span id="local-6989586621679353712"><span class="annot"><span class="annottext">m :: String
+</span><a href="#local-6989586621679353712"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler LoginResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err400</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353712"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-84"></span><span>        </span><span class="hs-special">(</span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-identifier">_</span><span class="hs-special">)</span><span>     </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler LoginResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err500</span></span><span>
+</span><span id="line-85"></span><span>
+</span><span id="line-86"></span><span class="hs-comment">-- | Handles listing users</span><span>
+</span><span id="line-87"></span><span class="annot"><a href="UserApi.html#getUsersHandler"><span class="hs-identifier hs-type">getUsersHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="hs-special">[</span><span class="annot"><a href="AuthTypes.html#UserL"><span class="hs-identifier hs-type">AuthTypes.UserL</span></a></span><span class="hs-special">]</span><span>
+</span><span id="line-88"></span><span id="getUsersHandler"><span class="annot"><span class="annottext">getUsersHandler :: Handler [UserL]
+</span><a href="UserApi.html#getUsersHandler"><span class="hs-identifier hs-var hs-var">getUsersHandler</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">IO [UserL] -&gt; Handler [UserL]
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">IO [UserL]
+</span><a href="IOH.html#getUsers"><span class="hs-identifier hs-var">IOH.getUsers</span></a></span><span>
+</span><span id="line-89"></span><span>
+</span><span id="line-90"></span><span class="hs-comment">-- | Handles feching of UserProfile objects</span><span>
+</span><span id="line-91"></span><span class="annot"><a href="UserApi.html#getUserPHandler"><span class="hs-identifier hs-type">getUserPHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Int64</span></span><span> </span><span class="hs-comment">-- ^ UserId of the user to fech profile for</span><span>
+</span><span id="line-92"></span><span>                </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="AuthTypes.html#UserP"><span class="hs-identifier hs-type">AuthTypes.UserP</span></a></span><span>
+</span><span id="line-93"></span><span id="getUserPHandler"><span class="annot"><span class="annottext">getUserPHandler :: Int64 -&gt; Handler UserP
+</span><a href="UserApi.html#getUserPHandler"><span class="hs-identifier hs-var hs-var">getUserPHandler</span></a></span></span><span> </span><span id="local-6989586621679353711"><span class="annot"><span class="annottext">uId :: Int64
+</span><a href="#local-6989586621679353711"><span class="hs-identifier hs-var">uId</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-94"></span><span>    </span><span id="local-6989586621679353710"><span class="annot"><span class="annottext">Either IOHError UserL
+</span><a href="#local-6989586621679353710"><span class="hs-identifier hs-var">u</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either IOHError UserL) -&gt; Handler (Either IOHError UserL)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOHError UserL) -&gt; Handler (Either IOHError UserL))
+-&gt; IO (Either IOHError UserL) -&gt; Handler (Either IOHError UserL)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; IO (Either IOHError UserL)
+</span><a href="IOH.html#getUserL"><span class="hs-identifier hs-var">IOH.getUserL</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353711"><span class="hs-identifier hs-var">uId</span></a></span><span>
+</span><span id="line-95"></span><span>    </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either IOHError UserL
+</span><a href="#local-6989586621679353710"><span class="hs-identifier hs-var">u</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-96"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353709"><span class="annot"><span class="annottext">uL :: UserL
+</span><a href="#local-6989586621679353709"><span class="hs-identifier hs-var">uL</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-97"></span><span>        </span><span id="local-6989586621679353708"><span class="annot"><span class="annottext">[Bug]
+</span><a href="#local-6989586621679353708"><span class="hs-identifier hs-var">bugs</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO [Bug] -&gt; Handler [Bug]
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO [Bug] -&gt; Handler [Bug]) -&gt; IO [Bug] -&gt; Handler [Bug]
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; IO [Bug]
+</span><a href="IOH.html#getBugsByUser"><span class="hs-identifier hs-var">IOH.getBugsByUser</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353711"><span class="hs-identifier hs-var">uId</span></a></span><span>
+</span><span id="line-98"></span><span>        </span><span class="annot"><span class="annottext">UserP -&gt; Handler UserP
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(UserP -&gt; Handler UserP) -&gt; UserP -&gt; Handler UserP
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int64
+-&gt; String -&gt; Int -&gt; String -&gt; Maybe String -&gt; Int -&gt; [Bug] -&gt; UserP
+</span><a href="AuthTypes.html#UserP"><span class="hs-identifier hs-var">AuthTypes.UserP</span></a></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353711"><span class="hs-identifier hs-var">uId</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserL -&gt; String
+</span><a href="AuthTypes.html#userLName"><span class="hs-identifier hs-var hs-var">userLName</span></a></span><span> </span><span class="annot"><span class="annottext">UserL
+</span><a href="#local-6989586621679353709"><span class="hs-identifier hs-var">uL</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserL -&gt; Int
+</span><a href="AuthTypes.html#userLRole"><span class="hs-identifier hs-var hs-var">userLRole</span></a></span><span> </span><span class="annot"><span class="annottext">UserL
+</span><a href="#local-6989586621679353709"><span class="hs-identifier hs-var">uL</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserL -&gt; String
+</span><a href="AuthTypes.html#userLCreatedTime"><span class="hs-identifier hs-var hs-var">userLCreatedTime</span></a></span><span> </span><span class="annot"><span class="annottext">UserL
+</span><a href="#local-6989586621679353709"><span class="hs-identifier hs-var">uL</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserL -&gt; Maybe String
+</span><a href="AuthTypes.html#userLLastLogin"><span class="hs-identifier hs-var hs-var">userLLastLogin</span></a></span><span> </span><span class="annot"><span class="annottext">UserL
+</span><a href="#local-6989586621679353709"><span class="hs-identifier hs-var">uL</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserL -&gt; Int
+</span><a href="AuthTypes.html#userLAvatar"><span class="hs-identifier hs-var hs-var">userLAvatar</span></a></span><span> </span><span class="annot"><span class="annottext">UserL
+</span><a href="#local-6989586621679353709"><span class="hs-identifier hs-var">uL</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="annottext">[Bug]
+</span><a href="#local-6989586621679353708"><span class="hs-identifier hs-var">bugs</span></a></span><span>
+</span><span id="line-99"></span><span>      </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHFetchError"><span class="hs-identifier hs-type">IOHFetchError</span></a></span><span> </span><span id="local-6989586621679353707"><span class="annot"><span class="annottext">m :: String
+</span><a href="#local-6989586621679353707"><span class="hs-identifier hs-var">m</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler UserP
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err404</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353707"><span class="hs-identifier hs-var">m</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-100"></span><span>
+</span><span id="line-101"></span><span class="hs-comment">-- | Handles changing a user's role (mod only)</span><span>
+</span><span id="line-102"></span><span class="annot"><a href="UserApi.html#changeUserRoleHandler"><span class="hs-identifier hs-type">changeUserRoleHandler</span></a></span><span> </span><span class="hs-glyph">::</span><span> </span><span class="annot"><a href="AuthTypes.html#AuthenticatedUser"><span class="hs-identifier hs-type">AuthenticatedUser</span></a></span><span> </span><span class="hs-comment">-- ^ The user making the request</span><span>
+</span><span id="line-103"></span><span>                      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><a href="AuthTypes.html#UserChangeRoleData"><span class="hs-identifier hs-type">UserChangeRoleData</span></a></span><span> </span><span class="hs-comment">-- ^ The user change data to make</span><span>
+</span><span id="line-104"></span><span>                      </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="hs-identifier hs-type">Handler</span></span><span> </span><span class="annot"><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-type">UserChangedResponseMessage</span></a></span><span>
+</span><span id="line-105"></span><span id="changeUserRoleHandler"><span class="annot"><span class="annottext">changeUserRoleHandler :: AuthenticatedUser
+-&gt; UserChangeRoleData -&gt; Handler UserChangedResponseMessage
+</span><a href="UserApi.html#changeUserRoleHandler"><span class="hs-identifier hs-var hs-var">changeUserRoleHandler</span></a></span></span><span> </span><span id="local-6989586621679353706"><span class="annot"><span class="annottext">au :: AuthenticatedUser
+</span><a href="#local-6989586621679353706"><span class="hs-identifier hs-var">au</span></a></span></span><span> </span><span id="local-6989586621679353705"><span class="annot"><span class="annottext">ucr :: UserChangeRoleData
+</span><a href="#local-6989586621679353705"><span class="hs-identifier hs-var">ucr</span></a></span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-106"></span><span>    </span><span class="hs-keyword">if</span><span> </span><span class="annot"><span class="annottext">Bool -&gt; Bool
+</span><span class="hs-identifier hs-var">not</span></span><span> </span><span class="annot"><span class="annottext">(Bool -&gt; Bool) -&gt; Bool -&gt; Bool
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Bool
+</span><a href="AuthTypes.html#isUserMod"><span class="hs-identifier hs-var">isUserMod</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353706"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="hs-keyword">then</span><span>
+</span><span id="line-107"></span><span>      </span><span class="annot"><span class="annottext">ServerError -&gt; Handler UserChangedResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err404</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="hs-string">&quot;Insufficient Permissions&quot;</span></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-108"></span><span>    </span><span class="hs-keyword">else</span><span> </span><span class="hs-keyword">do</span><span>
+</span><span id="line-109"></span><span>      </span><span id="local-6989586621679353703"><span class="annot"><span class="annottext">Either IOHError Int64
+</span><a href="#local-6989586621679353703"><span class="hs-identifier hs-var">res</span></a></span></span><span> </span><span class="hs-glyph">&lt;-</span><span> </span><span class="annot"><span class="annottext">IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64)
+forall (m :: * -&gt; *) a. MonadIO m =&gt; IO a -&gt; m a
+</span><span class="hs-identifier hs-var">liftIO</span></span><span> </span><span class="annot"><span class="annottext">(IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64))
+-&gt; IO (Either IOHError Int64) -&gt; Handler (Either IOHError Int64)
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser -&gt; Int64 -&gt; Int -&gt; IO (Either IOHError Int64)
+</span><a href="IOH.html#changeUserRole"><span class="hs-identifier hs-var">IOH.changeUserRole</span></a></span><span> </span><span class="annot"><span class="annottext">AuthenticatedUser
+</span><a href="#local-6989586621679353706"><span class="hs-identifier hs-var">au</span></a></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserChangeRoleData -&gt; Int64
+</span><a href="AuthTypes.html#ucrId"><span class="hs-identifier hs-var hs-var">ucrId</span></a></span><span> </span><span class="annot"><span class="annottext">UserChangeRoleData
+</span><a href="#local-6989586621679353705"><span class="hs-identifier hs-var">ucr</span></a></span><span class="hs-special">)</span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserChangeRoleData -&gt; Int
+</span><a href="AuthTypes.html#ucrRole"><span class="hs-identifier hs-var hs-var">ucrRole</span></a></span><span> </span><span class="annot"><span class="annottext">UserChangeRoleData
+</span><a href="#local-6989586621679353705"><span class="hs-identifier hs-var">ucr</span></a></span><span class="hs-special">)</span><span>
+</span><span id="line-110"></span><span>      </span><span class="hs-keyword">case</span><span> </span><span class="annot"><span class="annottext">Either IOHError Int64
+</span><a href="#local-6989586621679353703"><span class="hs-identifier hs-var">res</span></a></span><span> </span><span class="hs-keyword">of</span><span>
+</span><span id="line-111"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Right</span></span><span> </span><span id="local-6989586621679353702"><span class="annot"><span class="annottext">uId :: Int64
+</span><a href="#local-6989586621679353702"><span class="hs-identifier hs-var">uId</span></a></span></span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">UserChangedResponseMessage -&gt; Handler UserChangedResponseMessage
+forall (f :: * -&gt; *) a. Applicative f =&gt; a -&gt; f a
+</span><span class="hs-identifier hs-var">pure</span></span><span> </span><span class="annot"><span class="annottext">(UserChangedResponseMessage -&gt; Handler UserChangedResponseMessage)
+-&gt; UserChangedResponseMessage -&gt; Handler UserChangedResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span> </span><span class="annot"><span class="annottext">Int -&gt; Int64 -&gt; String -&gt; String -&gt; UserChangedResponseMessage
+</span><a href="ApiTypes.html#UserChangedResponseMessage"><span class="hs-identifier hs-var">UserChangedResponseMessage</span></a></span><span> </span><span class="annot"><span class="hs-number">200</span></span><span> </span><span class="hs-special">(</span><span class="annot"><span class="annottext">UserChangeRoleData -&gt; Int64
+</span><a href="AuthTypes.html#ucrId"><span class="hs-identifier hs-var hs-var">ucrId</span></a></span><span> </span><span class="annot"><span class="annottext">UserChangeRoleData
+</span><a href="#local-6989586621679353705"><span class="hs-identifier hs-var">ucr</span></a></span><span class="hs-special">)</span><span> </span><span class="annot"><span class="hs-string">&quot;OK&quot;</span></span><span> </span><span class="annot"><span class="annottext">(String -&gt; UserChangedResponseMessage)
+-&gt; String -&gt; UserChangedResponseMessage
+forall a b. (a -&gt; b) -&gt; a -&gt; b
+</span><span class="hs-operator hs-var">$</span></span><span>
+</span><span id="line-112"></span><span>                    </span><span class="annot"><span class="hs-string">&quot;Changed role for user &quot;</span></span><span> </span><span class="annot"><span class="annottext">String -&gt; String -&gt; String
+forall a. [a] -&gt; [a] -&gt; [a]
+</span><span class="hs-operator hs-var">++</span></span><span> </span><span class="annot"><span class="annottext">Int64 -&gt; String
+forall a. Show a =&gt; a -&gt; String
+</span><span class="hs-identifier hs-var">show</span></span><span> </span><span class="annot"><span class="annottext">Int64
+</span><a href="#local-6989586621679353702"><span class="hs-identifier hs-var">uId</span></a></span><span>
+</span><span id="line-113"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHFetchError"><span class="hs-identifier hs-type">IOHFetchError</span></a></span><span> </span><span id="local-6989586621679353701"><span class="annot"><span class="annottext">msg :: String
+</span><a href="#local-6989586621679353701"><span class="hs-identifier hs-var">msg</span></a></span></span><span class="hs-special">)</span><span> </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler UserChangedResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err404</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353701"><span class="hs-identifier hs-var">msg</span></a></span><span> </span><span class="hs-special">}</span><span>
+</span><span id="line-114"></span><span>        </span><span class="annot"><span class="hs-identifier hs-type">Left</span></span><span> </span><span class="hs-special">(</span><span class="annot"><a href="IOH.html#IOHAuthError"><span class="hs-identifier hs-type">IOHAuthError</span></a></span><span> </span><span id="local-6989586621679353700"><span class="annot"><span class="annottext">msg :: String
+</span><a href="#local-6989586621679353700"><span class="hs-identifier hs-var">msg</span></a></span></span><span class="hs-special">)</span><span>  </span><span class="hs-glyph">-&gt;</span><span> </span><span class="annot"><span class="annottext">ServerError -&gt; Handler UserChangedResponseMessage
+forall e (m :: * -&gt; *) a. MonadError e m =&gt; e -&gt; m a
+</span><span class="hs-identifier hs-var">Servant.throwError</span></span><span> </span><span class="annot"><span class="annottext">ServerError
+</span><span class="hs-identifier hs-var">err401</span></span><span> </span><span class="hs-special">{</span><span> </span><span class="annot"><span class="annottext">errBody :: ByteString
+</span><span class="hs-identifier hs-var">errBody</span></span><span> </span><span class="hs-glyph">=</span><span> </span><span class="annot"><span class="annottext">String -&gt; ByteString
+</span><span class="hs-identifier hs-var">packChars</span></span><span> </span><span class="annot"><span class="annottext">String
+</span><a href="#local-6989586621679353700"><span class="hs-identifier hs-var">msg</span></a></span><span class="hs-special">}</span><span>
+</span><span id="line-115"></span><span>
+</span><span id="line-116"></span></pre></body></html>
